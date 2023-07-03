@@ -1,5 +1,5 @@
 # Inside make.jl
-push!(LOAD_PATH,"../src/")
+# push!(LOAD_PATH,"../src/")
 
 using FinanceRoutines
 using Documenter
@@ -8,10 +8,12 @@ makedocs(
          modules  = [FinanceRoutines],
          pages=[
                 "Home" => "index.md"
-               ])
+               ]
+               )
+
 deploydocs(;
-    repo="github.com/eloualiche/FinanceRoutines.jl",
+    repo="github.com/eloualiche/FinanceRoutines.jl.git",
     target = "build",
     branch = "gh-pages",
-
 )
+
