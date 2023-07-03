@@ -11,4 +11,7 @@ makedocs(
                ])
 deploydocs(;
     repo="github.com/eloualiche/FinanceRoutines.jl",
+    target = "build",
+    branch = "gh-pages",
+
 )
