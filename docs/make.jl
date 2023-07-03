@@ -11,6 +11,11 @@ makedocs(
                ]
                )
 
+deploydocs(
+    repo="github.com/eloualiche/FinanceRoutines.jl.git",
+    target = "build",
+)
+
 deploydocs(;
     repo="github.com/eloualiche/FinanceRoutines.jl.git",
     target = "build",
