@@ -24,7 +24,7 @@ end
 function import_FF3()
 
     url_FF = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip"
-    ff_col_classes = [Int, Float64, Float64, Float64, Float64];
+    ff_col_classes = [String7, Float64, Float64, Float64, Float64];
     row_lim = div(MonthlyDate(Dates.today()) - MonthlyDate(1926, 7), Dates.Month(1)) - 1
 
     http_response = Downloads.download(url_FF);
@@ -40,9 +40,10 @@ function import_FF3()
     rename!(df_FF3, [:dateym, :mktrf, :smb, :hml, :rf]);
     @subset!(df_FF3, .!(ismissing.(:dateym)));
     @subset!(df_FF3, .!(ismissing.(:mktrf)));
-    @subset!(df_FF3, :dateym .>= 190000 )    
-    
-    return(df_FF3)
+    @rtransform!(df_FF3, :dateym = MonthlyDate(:dateym, "yyyymm"))
+    @subset!(df_FF3, :dateym .>= MonthlyDate("1900-01", "yyyy-mm") )    
+
+    return df_FF3
 end
 
 
@@ -70,15 +71,12 @@ function import_FF3(frequency::Symbol)
         df_FF3 = copy(CSV.File(a_file_in_zip, header=4, footerskip=1) |> DataFrame);
         close(z)
 
-        rename!(df_FF3, [:dateymd, :mktrf, :smb, :hml, :rf]);
-        @subset!(df_FF3, .!(ismissing.(:dateymd)));
+        rename!(df_FF3, [:date, :mktrf, :smb, :hml, :rf]);
+        @subset!(df_FF3, .!(ismissing.(:date)));
         @subset!(df_FF3, .!(ismissing.(:mktrf)));
-        @transform!(df_FF3, 
-            :date  = Date.(div.(:dateymd, 10000), 
-                           rem.(div.(:dateymd, 100), 100), rem.(:dateymd,100) ) 
-            )
+        @rtransform!(df_FF3, :date = Date(string(:date), "yyyymmdd") )
 
-        return(df_FF3)
+        return df_FF3
     
     else
         @warn "Frequency $frequency not known. Try :daily or leave blank for :monthly"
