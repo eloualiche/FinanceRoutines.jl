@@ -3,20 +3,35 @@
 
 # Collection of functions that import 
 #  compustat data into julia
-# ------------------------------------------------------------------------------------------
 
-
-# ------------------------------------------------------------------------------------------
 # List of exported functions
-# export import_MSF 
-# export build_MSF
-
-# list
+# export import_Funda 
+# export build_Funda
 # ------------------------------------------------------------------------------------------
 
 
 
 # ------------------------------------------------------------------------------------------
+"""
+    import_Funda(wrds_conn; date_range, variables)
+    import_Funda(; 
+        date_range=(Date("1900-01-01"), Date("2030-01-01"), 
+        variables::String = "", user="", password="")
+
+Import the funda file from CapitalIQ Compustat on WRDS PostGre server
+
+# Arguments
+- `wrds_conn::Connection`: An existing PostGreSQL connection to WRDS; creates one if empty
+
+# Keywords
+- `date_range::Tuple{Date, Date}`: A tuple of dates to select data (limits the download size)
+- `variables::Vector{String}`: A vector of String of additional variable to include in the download
+- `user::String`: username to log into the WRDS cli; default to ask user for authentication
+- `password::String`: password to log into the WRDS cli
+
+# Returns
+- `df_funda::DataFrame`: DataFrame with compustat funda file
+"""
 function import_Funda(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
     variables::String = ""
@@ -73,6 +88,20 @@ end
 
 
 # ------------------------------------------------------------------------------------------
+"""
+    build_Funda(df_funda::DataFrame; save)
+
+Clean up the compustat funda file download from crsp (see `import_Funda`)
+
+# Arguments
+- `df_funda::DataFrame`: A standard dataframe with compustat data (minimum variables are in `import_Funda`)
+
+# Keywords
+- `save::String`: Save a gzip version of the data on path `\$save/funda.csv.gz`; Default does not save the data.
+
+# Returns
+- `df_funda::DataFrame`: DataFrame with compustat funda file "cleaned"
+"""
 function build_Funda(df_funda::DataFrame;
     save::String = ""
     )

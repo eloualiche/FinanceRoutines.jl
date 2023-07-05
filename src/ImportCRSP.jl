@@ -51,6 +51,26 @@
 
 
 # ------------------------------------------------------------------------------------------
+"""
+    import_MSF(wrds_conn; date_range, variables)
+    import_MSF(; 
+        date_range=(Date("1900-01-01"), Date("2030-01-01"), 
+        variables::String = "", user="", password="")
+
+Import the CRSP Monthly Stock File (MSF) from CRSP on WRDS PostGre server
+
+# Arguments
+- `wrds_conn::Connection`: An existing PostGreSQL connection to WRDS; creates one if empty
+
+# Keywords
+- `date_range::Tuple{Date, Date}`: A tuple of dates to select data (limits the download size)
+- `variables::Vector{String}`: A vector of String of additional variable to include in the download
+- `user::String`: username to log into the WRDS cli; default to ask user for authentication
+- `password::String`: password to log into the WRDS cli
+
+# Returns
+- `df_msf_final::DataFrame`: DataFrame with msf crsp file
+"""
 function import_MSF(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
     variables::String = ""
@@ -160,7 +180,18 @@ end
 
 # ------------------------------------------------------------------------------------------
 """
-    This comes after import_MSF
+    build_MSF(df_msf::DataFrame; save)
+
+Clean up the compustat funda file download from crsp (see `import_Funda`)
+
+# Arguments
+- `df_funda::DataFrame`: A standard dataframe with compustat data (minimum variables are in `import_Funda`)
+
+# Keywords
+- `save::String`: Save a gzip version of the data on path `\$save/funda.csv.gz`; Default does not save the data.
+
+# Returns
+- `df_msf::DataFrame`: DataFrame with compustat funda file "cleaned"
 """
 function build_MSF(df_msf::DataFrame;
     save::String = ""
@@ -258,101 +289,3 @@ function import_DSF(;
     return import_DSF(wrds_conn, date_range=date_range, variables=variables)
 end
 # ------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # ------------------------------------------------------------------------------------------
-# """
-#     Multiple dispatch to load from clean CSV
-# """
-
-#     # What are the classes?
-#     msf_col_classes = [Int, String, Int, Int, Int,  # "PERMNO" "date" "NAMEENDT" "SHRCD"  "EXCHCD"
-#         String, String, String, String, String,     # "SICCD" "NCUSIP" "TICKER" "COMNAM" "SHRCLS"
-#         String, Int, String, String, String,        # "TSYMBOL" "NAICS"  "PRIMEXCH" "TRDSTAT" "SECSTAT"
-#         Int, Int, Int, String, String,              # "PERMCO" "ISSUNO" "HEXCD" "HSICCD" "CUSIP"
-#         Int, Float64, Int, Int, Int,                # "DCLRDT" "DLAMT" "DLPDT" "DLSTCD" "NEXTDT
-#         Int, Int, Int, Int, Int,                    # "PAYDT"  "RCRDDT" "SHRFLG" "HSICMG" "HSICIG"
-#         Int, Float64, Float64, Float64, Int,        # "DISTCD" "DIVAMT" "FACPR"  "FACSHR" "ACPERM"
-#         Int, Int, Int, String, Float64,             # "ACCOMP" "SHRENDDT" "NWPERM" "DLRETX" "DLPRC"
-#         String, Int, Int, Int, Int,                 # "DLRET"    "TRTSCD"   "NMSIND"   "MMCNT"    "NSDINX"
-#         Float64, Float64, Float64, Int, String,     # "BIDLO"    "ASKHI"    "PRC"      "VOL"      "RET"
-#         Float64, Float64, Int, Float64, Float64,       # "BID"  "ASK" "SHROUT" CFACPR" "CFACSHR"
-#         Float64, Float64, Int, String,                 # "ALTPRC"   "SPREAD"   "ALTPRCDT" "RETX"
-#         Float64, Float64, Float64, Float64, Float64];  # "vwretd" "vwretx" "ewretd" "ewretx" "sprtrn"
-
-#     # KEEP SOME COLUMNS
-#     col_keep = [:PERMNO, :NAICS, :SICCD, :HSICCD, :date, :PRC, :RET, :SHROUT, 
-#                 :HEXCD, :SHRCD] ;
-#     col_keep = vcat(col_keep, variables);
-#     # col_keep = intersect(Symbol.(names(df_crsp)), col_keep);
-
-#     # READ THE FILE
-#     df_msf = CSV.File(
-#         expanduser(path_to_file);
-#         header=1, types = msf_col_classes, 
-#         silencewarnings=true, missingstring="NA", delim=',',
-#         select = col_keep
-#         ) |> DataFrame;
-
-#     # Lower Case Names
-#     rename!(df_msf, lowercase.(names(df_msf)));
-
-#     # Filter Stock CLASSES
-#     @rsubset!(df_msf, :hexcd ∈ (1, 2, 3) )
-#     @rsubset!(df_msf, :shrcd ∈ (10, 11) )
-
-#     # FILTER THE DATE RANGE
-#     @rtransform!(df_msf, :datey = tryparse(Int, :date[1:4]));
-#     @subset!(df_msf, :datey .>= date_range[1], :datey .<= date_range[2] )
-
-#     # CLEAN UP THE MAIN VARIABLES (return | market cap | date)
-#     @rtransform!(df_msf, :ret = passmissing(tryparse)(Float64, :ret) );  # returns
-#     @rtransform!(df_msf, :ret = (x -> isnothing(x) ? missing : x)(:ret) );
-#     @rtransform!(df_msf, :me = abs(:prc) * :shrout);
-#     @rtransform!(df_msf, :date = Date(:datey, tryparse(Int, :date[5:6]), tryparse(Int, :date[7:8])));
-#     @rtransform!(df_msf, :datem = MonthlyDate(:date) );
-
-#     # BEFORE LAGS, REMOVE DUPLICATES BY MONTH|PERMNO
-#     # Look for unique keys within returns and market equity
-#     unique!(df_msf, [:permno, :datem, :ret, :me]);
-#     sort!(df_msf, [:permno, :date]);
-
-#     # LAG ME for one month
-#     @transform!(groupby(df_msf, :permno), 
-#         :l1m_me = lag(:me, 1), :l1m_datem = lag(:datem, 1) );
-#     # missing if lag is not one month prior
-#     @rtransform!(df_msf, 
-#         @passmissing :l1m_me = (:l1m_datem + Dates.Month(1) .== :datem) ? :l1m_me : Base.missing);
-
-#     # CLEAN UP THE COLUMNS 
-#     select!(df_msf, Not(intersect([:shrcd, :hexcd, :l1m_datem], Symbol.(names(df_msf)))))
-#     select!(df_msf, vcat([:permno, :date, :ret, :l1m_me], Symbol.(names(df_msf))) |> unique)
-
-#     return df_msf
-
-# end
-# # ------------------------------------------------------------------------------------------
-
-
-# # ------------------------------------------------------------------------------------------
-# # Utilities (non exported)
-# function check_integer(x::AbstractVector)
-#     for i in x
-#         !(typeof(i) <: Union{Missing, Number}) && return false
-#         ismissing(i) && continue
-#         isinteger(i) && continue
-#         return false
-#     end
-#     return true
-# end
