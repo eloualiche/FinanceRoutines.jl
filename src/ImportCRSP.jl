@@ -54,13 +54,13 @@
 """
     import_MSF(wrds_conn; date_range, variables)
     import_MSF(; 
-        date_range=(Date("1900-01-01"), Date("2030-01-01"), 
+        date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
         variables::String = "", user="", password="")
 
 Import the CRSP Monthly Stock File (MSF) from CRSP on WRDS PostGre server
 
 # Arguments
-- `wrds_conn::Connection`: An existing PostGreSQL connection to WRDS; creates one if empty
+- `wrds_conn::Connection`: An existing Postgres connection to WRDS; creates one if empty
 
 # Keywords
 - `date_range::Tuple{Date, Date}`: A tuple of dates to select data (limits the download size)
@@ -72,7 +72,7 @@ Import the CRSP Monthly Stock File (MSF) from CRSP on WRDS PostGre server
 - `df_msf_final::DataFrame`: DataFrame with msf crsp file
 """
 function import_MSF(wrds_conn::Connection;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
+    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
     variables::String = ""
     )
 
@@ -180,81 +180,83 @@ end
 
 # ------------------------------------------------------------------------------------------
 """
-    build_MSF(df_msf::DataFrame; save)
+    build_MSF!(df_msf::DataFrame; save)
 
-Clean up the compustat funda file download from crsp (see `import_Funda`)
+Clean up the CRSP Monthly Stock File (see `import_MSF`)
 
 # Arguments
-- `df_funda::DataFrame`: A standard dataframe with compustat data (minimum variables are in `import_Funda`)
+- `df::DataFrame`: A standard dataframe with compustat data (minimum variables are in `import_Funda`)
 
 # Keywords
 - `save::String`: Save a gzip version of the data on path `\$save/funda.csv.gz`; Default does not save the data.
-
-# Returns
-- `df_msf::DataFrame`: DataFrame with compustat funda file "cleaned"
+- `trim_col::Bool`: Only keep a subset of relevant columns in the final dataset
 """
-function build_MSF(df_msf::DataFrame;
-    save::String = ""
-    )
+function build_MSF!(df::DataFrame;
+    save::String = "", trim_col::Bool = false)
+
+ # Check that all necessary variables are in
+    ["mktcap", "shrout", "altprc", "permno", "datem", "dlstcd", "ret", "dlret"]
+
 
 # Create marketcap:
-    @rtransform!(df_msf, :mktcap = abs(:shrout * :altprc)) # in 1000s
-    df_msf[ isequal.(df_msf.mktcap, 0), :mktcap] .= missing;
+    @rtransform!(df, :mktcap = abs(:shrout * :altprc)) # in 1000s
+    df[ isequal.(df.mktcap, 0), :mktcap] .= missing;
 
 # Lagged marketcap
-    sort!(df_msf, [:permno, :datem])
+    sort!(df, [:permno, :datem])
     # method 1: lag and then merge back
     # df_msf_mktcap_lag = @select(df_msf,
     #         :datem = :datem + Month(1), :permno, :l1m_mktcap2 = :mktcap)
     # df_msf = leftjoin(df_msf, df_msf_mktcap_lag, on = [:permno, :datem])
-    panellag!(df_msf, :permno, :datem, 
+    panellag!(df, :permno, :datem, 
         :mktcap, :l1m_mktcap, Month(1))
 
 # Adjusted returns (see tidy finance following Bali, Engle, and Murray)
-    @rtransform! df_msf :ret_adj = 
+    @rtransform! df :ret_adj = 
         ismissing(:dlstcd) ? :ret : 
             !ismissing(:dlret) ? :dlret :
                 (:dlstcd ∈ (500, 520, 580, 584)) || ((:dlstcd >= 551) & (:dlstcd <= 574)) ? -0.3 :
                     :dlstcd == 100 ? :ret : -1.0
 
 # select variables and save
-    select!(df_msf, :permno, :date, :ret, :mktcap, :l1m_mktcap, :retx, 
-        :naics, :hsiccd)
+    if trim_col
+        select!(df, :permno, :date, :ret, :mktcap, :l1m_mktcap, :retx, :naics, :hsiccd)
+    end
     if !(save == "")
-        CSV.write(save * "/msf.csv.gz", df_msf, compress=true)
+        CSV.write(save * "/msf.csv.gz", df, compress=true)
     end
 
-    return df_msf
+    return df
 end
 
 
 function build_MSF(wrds_conn::Connection;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
+    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
     save::Bool = false,
     )
 
-    df_msf = import_MSF(wrds_conn; date_range=date_range);
-    df_msf = build_msf(df_msf, save = save)
-    return df_msf
+    df = import_MSF(wrds_conn; date_range=date_range);
+    df = build_msf(df, save = save)
+    return df
 end
 
 
 function build_MSF(;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
+    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
     save::Bool = false,
     )
 
-    df_msf = import_MSF(;date_range);
-    df_msf = build_msf(df_msf, save = save)
+    df = import_MSF(;date_range);
+    df = build_msf(df, save = save)
 
-    return df_msf
+    return df
 end
 # ------------------------------------------------------------------------------------------
 
 
 # ------------------------------------------------------------------------------------------
 function import_DSF(wrds_conn::Connection;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
+    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
     variables::String
     )
 
@@ -276,7 +278,7 @@ end
 
 # when there are no connections establisheds
 function import_DSF(;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
+    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
     variables::String = "",
     user::String = "", password::String = "")
 

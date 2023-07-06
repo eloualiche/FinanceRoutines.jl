@@ -3,7 +3,7 @@
 # STANDARD JULIA IGNORE
 /Manifest.toml
 docs/build/
-
+.DS_Store
 # ---------------------------------------------------------
 
 

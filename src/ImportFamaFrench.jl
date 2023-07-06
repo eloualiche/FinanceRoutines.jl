@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------------------
 
-# ImportFinanceData.jl
+# ImportFamaFrench.jl
 
 # Collection of functions that import 
 #  financial data into julia

@@ -14,7 +14,7 @@ end
 
 # ------------------------------------------------------------------------------------------
 """
-    Open a postgresql connection on WRDS server
+    Open a Postgres connection on WRDS server
 """
 function open_wrds_pg(user::String, password::String)
     wrds_conn = Connection(

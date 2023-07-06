@@ -16,7 +16,7 @@ import IntervalSets:(..)
 import LibPQ: LibPQ.execute, LibPQ.Connection
 import Missings: Missings, missing
 import MonthlyDates: MonthlyDate
-import PanelShift: panellag!
+import PanelShift: panellag!, tlag
 import ShiftedArrays: lag
 import Tables: columntable
 import WeakRefStrings: String3, String7, String15
@@ -27,7 +27,8 @@ import ZipFile: ZipFile.Reader
 # ------------------------------------------------------------------------------------------
 # Import functions
 include("Utilities.jl")
-include("ImportFinanceData.jl")
+include("ImportFamaFrench.jl")
+include("ImportYields.jl")
 include("ImportCRSP.jl")
 include("ImportComp.jl")
 include("Merge_CRSP_Comp.jl")
@@ -38,20 +39,26 @@ include("Merge_CRSP_Comp.jl")
 # List of exported functions
 export greet_FinanceRoutines  # for debugging
 
+# Yields on Treasuries
+export import_GSW
+export estimate_yield_GSW!, estimate_price_GSW!, estimate_return_GSW!
+
+# Fama-French data
+export import_FF3
+
 # WRDS
 # -- CRSP
 export import_MSF             # import Monthly Stock File
 export import_DSF             # import Daily Stock File
-export build_MSF              # clean Monthly Stock File
+export build_MSF!              # clean Monthly Stock File
 # -- Funda
 export import_Funda
-export build_Funda
+export build_Funda!
 # -- Link
 export link_Funda
 export link_MSF
 
-# FF
-export import_FF3
+
 # ------------------------------------------------------------------------------------------
 
 

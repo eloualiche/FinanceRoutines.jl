@@ -15,13 +15,13 @@
 """
     import_Funda(wrds_conn; date_range, variables)
     import_Funda(; 
-        date_range=(Date("1900-01-01"), Date("2030-01-01"), 
+        date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
         variables::String = "", user="", password="")
 
-Import the funda file from CapitalIQ Compustat on WRDS PostGre server
+Import the funda file from CapitalIQ Compustat on WRDS Postgres server
 
 # Arguments
-- `wrds_conn::Connection`: An existing PostGreSQL connection to WRDS; creates one if empty
+- `wrds_conn::Connection`: An existing Postgres connection to WRDS; creates one if empty
 
 # Keywords
 - `date_range::Tuple{Date, Date}`: A tuple of dates to select data (limits the download size)
@@ -33,7 +33,7 @@ Import the funda file from CapitalIQ Compustat on WRDS PostGre server
 - `df_funda::DataFrame`: DataFrame with compustat funda file
 """
 function import_Funda(wrds_conn::Connection;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
+    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
     variables::String = ""
     )
 
@@ -70,7 +70,7 @@ function import_Funda(wrds_conn::Connection;
 end
 
 function import_Funda(;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
+    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
     variables::String = "",
     user::String = "", password::String = "")
 
@@ -89,7 +89,7 @@ end
 
 # ------------------------------------------------------------------------------------------
 """
-    build_Funda(df_funda::DataFrame; save)
+    build_Funda!(df_funda::DataFrame; save)
 
 Clean up the compustat funda file download from crsp (see `import_Funda`)
 
@@ -102,24 +102,24 @@ Clean up the compustat funda file download from crsp (see `import_Funda`)
 # Returns
 - `df_funda::DataFrame`: DataFrame with compustat funda file "cleaned"
 """
-function build_Funda(df_funda::DataFrame;
+function build_Funda!(df::DataFrame;
     save::String = ""
     )
 
     # define book equity value
-    @transform!(df_funda, :be = 
+    @transform!(df, :be = 
         coalesce(:seq, :ceq + :pstk, :at - :lt) + coalesce(:txditc, :txdb + :itcb, 0) -
         coalesce(:pstkrv, :pstkl, :pstk, 0) )
-    df_funda[ isless.(df_funda.be, 0), :be] .= missing;
-    @rtransform!(df_funda, :date_y = year(:datadate));
-    sort!(df_funda, [:gvkey, :date_y, :datadate]) 
-    unique!(df_funda, [:gvkey, :date_y], keep=:last) # last obs
+    df[ isless.(df_funda.be, 0), :be] .= missing;
+    @rtransform!(df, :date_y = year(:datadate));
+    sort!(df, [:gvkey, :date_y, :datadate]) 
+    unique!(df, [:gvkey, :date_y], keep=:last) # last obs
 
     if !(save == "")
-        CSV.write(save * "/funda.csv.gz", df_funda, compress=true)
+        CSV.write(save * "/funda.csv.gz", df, compress=true)
     end
 
-    return df_funda
+    return df
 end
 # ------------------------------------------------------------------------------------------
 
