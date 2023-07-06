@@ -41,11 +41,11 @@ function import_FF3()
         DataFrame);
     close(z)
 
-    rename!(df_FF3, [:dateym, :mktrf, :smb, :hml, :rf]);
-    @subset!(df_FF3, .!(ismissing.(:dateym)));
+    rename!(df_FF3, [:datem, :mktrf, :smb, :hml, :rf]);
+    @subset!(df_FF3, .!(ismissing.(:datem)));
     @subset!(df_FF3, .!(ismissing.(:mktrf)));
-    @rtransform!(df_FF3, :dateym = MonthlyDate(:dateym, "yyyymm"))
-    @subset!(df_FF3, :dateym .>= MonthlyDate("1900-01", "yyyy-mm") )    
+    @rtransform!(df_FF3, :datem = MonthlyDate(:datem, "yyyymm"))
+    @subset!(df_FF3, :datem .>= MonthlyDate("1900-01", "yyyy-mm") )    
 
     return df_FF3
 end

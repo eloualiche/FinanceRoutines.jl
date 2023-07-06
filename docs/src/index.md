@@ -4,10 +4,13 @@
 
 ## Introduction
 
-This package provides a collection of source code *lexers* for various languages and markup
-formats and a selection of *themes* that can be used to customise the style of the formatted
-source code. Additional *lexer* definitions are straightforward to add and are based on the
-regular expression lexing mechanism used by [Pygments](http://pygments.org/).
+This package provides a collection of routines for academic finance work. 
+This is useful to get started with a clean copy of asset prices from CRSP and a ad-hoc merge with the accounting data from the Compustat Funda file. 
+
+I have also added utilities to download treasury yield curves (GSW) and Fama-French research factors.
+
+This is still very much work in progress: file [issues](https://github.com/eloualiche/FinanceRoutines.jl/issues) for comments.
+
 
 ## Installation
 
@@ -22,35 +25,11 @@ Pkg.add("https://github.com/eloualiche/FinanceRoutines.jl")
 ## Usage
 
   - Using WRDS (CRSP, Compustat, etc)
-      + See the [WRDS User Guide](@ref) for an introduction to using the package to download data from WRDS
+    + See the [WRDS User Guide](@ref) for an introduction to using the package to download data from WRDS
 
-  - See the demo to how this integrates into standard estimations in the [Estimating Beta](@ref) demo.
+  - Demos to how this integrates into standard estimations
+    + See how to estimate asset pricing betas in the [Estimating Beta](@ref) demo.
 
-
-
-## Other Resources
-
-```@contents
-Pages = ["index.md"]
-Depth = 3
-```
-
-## Functions
-
-```@docs
-import_Funda
-import_MSF
-import_FF3
-```
-
-```@docs
-build_Funda!
-build_MSF!
-```
-
-```@docs
-FinanceRoutines.open_wrds_pg
-```
 
 ## Index
 

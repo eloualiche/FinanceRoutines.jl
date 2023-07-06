@@ -82,7 +82,7 @@ function import_MSF(wrds_conn::Connection;
             FROM crsp.msf
             WHERE DATE >= '$(string(date_range[1]))' AND DATE <= '$(string(date_range[2]))'
     """
-    @time res_q_msf = execute(wrds_conn, postgre_query_msf)
+    res_q_msf = execute(wrds_conn, postgre_query_msf)
     df_msf = DataFrame(columntable(res_q_msf))
     transform!(df_msf,     # clean up the dataframe
         names(df_msf, check_integer.(eachcol(df_msf))) .=> (x->convert.(Union{Missing, Int}, x)); 
@@ -266,8 +266,8 @@ function import_DSF(wrds_conn::Connection;
             FROM crsp.dsf
             WHERE DATE >= '$(string(date_range[1]))' AND DATE <= '$(string(date_range[2]))'
     """
-    @time res_q_dsf = execute(wrds_conn, postgre_query_dsf)
-    @time df_dsf = DataFrame(columntable(res_q_dsf))
+    res_q_dsf = execute(wrds_conn, postgre_query_dsf)
+    df_dsf = DataFrame(columntable(res_q_dsf))
     # clean up the dataframe
     transform!(df_dsf, 
         names(df_dsf, check_integer.(eachcol(df_dsf))) .=> (x->convert.(Union{Missing, Int}, x)); 
