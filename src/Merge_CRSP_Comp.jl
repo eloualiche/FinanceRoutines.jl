@@ -27,7 +27,7 @@ function import_ccm_link(wrds_conn::Connection)
         SELECT *
             FROM crsp.ccmxpf_lnkhist
     """
-    @time res_q_linktable = execute(wrds_conn, postgre_query_linktable)
+    res_q_linktable = execute(wrds_conn, postgre_query_linktable)
 
     df_linktable = DataFrame(columntable(res_q_linktable))
     transform!(df_linktable, names(df_linktable, check_integer.(eachcol(df_linktable))) .=> 

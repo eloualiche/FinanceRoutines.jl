@@ -56,7 +56,7 @@ function import_Funda(wrds_conn::Connection;
                 AND DATADATE >= '$(string(date_range[1]))' 
                 AND DATADATE <= '$(string(date_range[2]))'
     """
-    @time res_q_funda = execute(wrds_conn, postgre_query_funda_var)
+    res_q_funda = execute(wrds_conn, postgre_query_funda_var)
     df_funda = DataFrame(columntable(res_q_funda));
 
     # clean up the dataframe
@@ -110,7 +110,7 @@ function build_Funda!(df::DataFrame;
     @transform!(df, :be = 
         coalesce(:seq, :ceq + :pstk, :at - :lt) + coalesce(:txditc, :txdb + :itcb, 0) -
         coalesce(:pstkrv, :pstkl, :pstk, 0) )
-    df[ isless.(df_funda.be, 0), :be] .= missing;
+    df[ isless.(df.be, 0), :be] .= missing;
     @rtransform!(df, :date_y = year(:datadate));
     sort!(df, [:gvkey, :date_y, :datadate]) 
     unique!(df, [:gvkey, :date_y], keep=:last) # last obs
