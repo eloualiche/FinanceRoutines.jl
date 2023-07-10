@@ -5,7 +5,24 @@
 | [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![CI Testing](https://github.com/eloualiche/FinanceRoutines.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/eloualiche/FinanceRoutines.jl/actions/workflows/CI.yml?query=branch%3Amain) |
 
 
+`FinanceRoutines.jl` is a package that contains useful functions to download and process academic financial data. 
 
+So far the package provides function to import:
+  
+  - CRSP and Compustat from the WRDS Postgres server
+  - Fama-French three factors series from Ken French's website
+  - GSW Yield curves from the [NY Fed](https://www.federalreserve.gov/pubs/feds/2006/200628/200628abs.html) 
+
+
+## Installation
+
+`FinanceRoutines.jl` is a not yet a registered package.
+You can install it from github  via
+
+```julia
+import Pkg
+Pkg.add("https://github.com/eloualiche/FinanceRoutines.jl")
+```
 
 ## Examples
 
@@ -14,6 +31,8 @@
 First import the monthly stock file and the compustat funda file
 ```julia
 using FinanceRoutines
+using DataFrames
+
 # Set up a wrds connection
 wrds_conn = FinanceRoutines.open_wrds_pg()
 
@@ -37,6 +56,16 @@ This downloads directly data from Ken French's website and formats the data
 df_FF3 = import_FF3()
 # there is an option to download the daily factors
 df_FF3_daily = import_FF3(:daily)
+```
+
+### Estimate treasury bond returns
+
+The function downloads yield curves from the [NY Fed GSW](https://www.federalreserve.gov/pubs/feds/2006/200628/200628abs.html) and estimate returns based on the curves
+
+```julia
+df_GSW = import_GSW();
+estimate_yield_GSW!(df_GSW; maturity=1); # maturity is in years
+select(df_GSW, :date, :yield_1y)
 ```
 
 

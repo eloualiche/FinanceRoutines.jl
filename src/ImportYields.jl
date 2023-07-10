@@ -49,7 +49,7 @@ function estimate_yield_GSW!(df::DataFrame;
     @rtransform!(df, 
         :y=NSSparamtoYield(maturity, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2) )
 
-    rename!(df, "y" => "yield_($maturity)y")
+    rename!(df, "y" => "yield_$(maturity)y")
 
 end
 
