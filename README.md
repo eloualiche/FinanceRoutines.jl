@@ -21,7 +21,7 @@ You can install it from github  via
 
 ```julia
 import Pkg
-Pkg.add("https://github.com/eloualiche/FinanceRoutines.jl")
+Pkg.add(url="https://github.com/eloualiche/FinanceRoutines.jl")
 ```
 
 ## Examples
