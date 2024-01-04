@@ -16,7 +16,7 @@ end
 """
     Open a Postgres connection on WRDS server
 """
-function open_wrds_pg(user::String, password::String)
+function open_wrds_pg(user::AbstractString, password::AbstractString)
     wrds_conn = Connection(
         """
             host = wrds-pgdata.wharton.upenn.edu 
