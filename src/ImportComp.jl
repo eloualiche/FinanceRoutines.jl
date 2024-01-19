@@ -34,12 +34,13 @@ Import the funda file from CapitalIQ Compustat on WRDS Postgres server
 """
 function import_Funda(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::String = ""
+    variables::Vector{String} = nothing
     )
 
     var_funda = ["GVKEY", "DATADATE", "SICH", "FYR", "FYEAR", 
-               "AT", "LT", "SALE", "EBITDA", "CAPX", "NI", "DV", "CEQ", "CEQL", "SEQ",
-               "TXDITC", "TXP", "TXDB", "ITCB", "DVT", "PSTK","PSTKL", "PSTKRV"]
+                 "AT", "LT", "SALE", "EBITDA", "CAPX", "NI", "DV", "CEQ", "CEQL", "SEQ",
+                 "TXDITC", "TXP", "TXDB", "ITCB", "DVT", "PSTK","PSTKL", "PSTKRV"]
+    !isnothing(variables) && append!(var_funda, uppercase.(variables))
 
 # set up the query for msf
     postgre_query_funda_full = """
@@ -50,7 +51,7 @@ function import_Funda(wrds_conn::Connection;
                 AND DATADATE <= '$(string(date_range[2]))'
     """
     postgre_query_funda_var = """
-        SELECT $(join(var_funda, ","))
+        SELECT $(join(unique(var_funda), ","))
             FROM comp.funda
             WHERE INDFMT = 'INDL' AND DATAFMT = 'STD' AND CONSOL = 'C' AND POPSRC = 'D'
                 AND DATADATE >= '$(string(date_range[1]))' 
