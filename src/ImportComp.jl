@@ -35,7 +35,7 @@ Import the funda file from CapitalIQ Compustat on WRDS Postgres server
 function import_Funda(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
     variables::Vector{String} = nothing,
-    filter_variables::Dict{Symbol, Any} = Dict(:CURCD=>"USD")  # if you want something fanciers ... export variable and do it later
+    filter_variables = Dict(:CURCD=>"USD")  # if you want something fanciers ... export variable and do it later
     )
 
     var_funda = ["GVKEY", "DATADATE", "SICH", "FYR", "FYEAR", 
@@ -79,7 +79,8 @@ end
 
 function import_Funda(;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::String = "",
+    variables::String = nothing,
+    filter_variables::Dict{Symbol, Any} = Dict(:CURCD=>"USD"),
     user::String = "", password::String = "")
 
     if user == ""
@@ -126,6 +127,9 @@ function build_Funda!(df::DataFrame;
     @rtransform!(df, :date_y = year(:datadate));
     sort!(df, [:gvkey, :date_y, :datadate]) 
     unique!(df, [:gvkey, :date_y], keep=:last) # last obs
+
+    verbose && (@info ". Cleaning superfluous columns INDFMT, etc.")
+    select!(df_funda, Not(intersect(names(df_funda), ["indfmt","datafmt","consol","popsrc", "curcd"])) )
 
     if !(save == "")
         verbose && (@info ". Saving to $save/funda.csv.gz")
