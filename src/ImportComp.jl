@@ -129,7 +129,7 @@ function build_Funda!(df::DataFrame;
     unique!(df, [:gvkey, :date_y], keep=:last) # last obs
 
     verbose && (@info ". Cleaning superfluous columns INDFMT, etc.")
-    select!(df_funda, Not(intersect(names(df_funda), ["indfmt","datafmt","consol","popsrc", "curcd"])) )
+    select!(df, Not(intersect(names(df), ["indfmt","datafmt","consol","popsrc", "curcd"])) )
 
     if !(save == "")
         verbose && (@info ". Saving to $save/funda.csv.gz")
