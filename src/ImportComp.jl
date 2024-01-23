@@ -34,13 +34,15 @@ Import the funda file from CapitalIQ Compustat on WRDS Postgres server
 """
 function import_Funda(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::Vector{String} = nothing
+    variables::Vector{String} = nothing,
+    filter_variables::Dict{Symbol, Any} = Dict(:CURCD=>"USD")  # if you want something fanciers ... export variable and do it later
     )
 
     var_funda = ["GVKEY", "DATADATE", "SICH", "FYR", "FYEAR", 
                  "AT", "LT", "SALE", "EBITDA", "CAPX", "NI", "DV", "CEQ", "CEQL", "SEQ",
                  "TXDITC", "TXP", "TXDB", "ITCB", "DVT", "PSTK","PSTKL", "PSTKRV"]
     !isnothing(variables) && append!(var_funda, uppercase.(variables))
+    !isnothing(filter_variables) && append!(var_funda, uppercase.(string.(keys(filter_variables))))
 
 # set up the query for msf
     postgre_query_funda_full = """
@@ -59,6 +61,11 @@ function import_Funda(wrds_conn::Connection;
     """
     res_q_funda = execute(wrds_conn, postgre_query_funda_var)
     df_funda = DataFrame(columntable(res_q_funda));
+
+    # run the filter
+    !isnothing(filter_variables) && for (key, value) in Dict(lowercase(string(k)) => v for (k, v) in filter_variables)
+        filter!(row -> (ismissing(row[key])) | (row[key] == value), df_funda) # we keep missing ... 
+    end
 
     # clean up the dataframe
     transform!(df_funda, 
@@ -104,10 +111,14 @@ Clean up the compustat funda file download from crsp (see `import_Funda`)
 - `df_funda::DataFrame`: DataFrame with compustat funda file "cleaned"
 """
 function build_Funda!(df::DataFrame;
-    save::String = ""
+    save::String = "",
+    verbose::Bool = false
     )
+    
+    verbose && (@info "--- Creating clean funda panel")
 
     # define book equity value
+    verbose && (@info ". Creating book equity")
     @transform!(df, :be = 
         coalesce(:seq, :ceq + :pstk, :at - :lt) + coalesce(:txditc, :txdb + :itcb, 0) -
         coalesce(:pstkrv, :pstkl, :pstk, 0) )
@@ -117,6 +128,7 @@ function build_Funda!(df::DataFrame;
     unique!(df, [:gvkey, :date_y], keep=:last) # last obs
 
     if !(save == "")
+        verbose && (@info ". Saving to $save/funda.csv.gz")
         CSV.write(save * "/funda.csv.gz", df, compress=true)
     end
 
