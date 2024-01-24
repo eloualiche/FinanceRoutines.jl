@@ -31,6 +31,16 @@ Pkg.add("https://github.com/eloualiche/FinanceRoutines.jl")
     + See how to estimate asset pricing betas in the [Estimating Beta](@ref) demo.
 
 
+## Other Resources
+
+There are multiple online resources on using the WRDS Postgres database and build the standard finance and accounting datasets:
+  
+  - Ian D. Gow and Tony Ding: *"Empirical Research in Accounting: Tools and Methods"*; available [here](https://iangow.github.io/far_book/)
+  - Chen, Andrew Y. and Tom Zimmermann: *"Open Source Cross-Sectional Asset Pricing"*; 2022, 27:2; available [here](https://www.openassetpricing.com/code/)
+  - Christoph Scheuch, Stefan Voigt, Patrick Weiss: *"Tidy Finance with R"*; 2023; Chapman & Hall; available [here](https://www.tidy-finance.org/r/)
+
+
+
 ## Index
 
 ```@index
