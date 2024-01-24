@@ -6,7 +6,7 @@ import Downloads
 import ZipFile
 import CSV
 import DataFrames: DataFrame, ByRow, groupby, nrow, passmissing, Not,
-  rename!, select!, groupby, transform!, leftjoin, disallowmissing!
+  rename!, select, select!, groupby, transform!, leftjoin, disallowmissing!
 import DataFramesMeta: DataFramesMeta, 
   @passmissing, @subset!, @rsubset!, @transform!, @rtransform!
 import Dates: Dates, Date, Day, Month, year
