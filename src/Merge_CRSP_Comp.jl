@@ -89,7 +89,7 @@ function link_MSF(df_linktable::DataFrame, df_msf::DataFrame)
     select!(df_msf_linked, :date, :permno, :gvkey)
 # merge this back
     df_msf_merged = leftjoin(df_msf, df_msf_linked, on = [:date, :permno], source="_merge")
-    @rtransform!(df_msf_merged, :date_y = year(:date));
+    @rtransform!(df_msf_merged, :datey = year(:date));
     select!(df_msf_merged, Not(:_merge))
 
     return df_msf_merged
@@ -103,7 +103,7 @@ function link_ccm(df_linktable, df_msf, df_funda)
 # ccm
     df_ccm = leftjoin(
         df_msf_merged, df_funda,
-        on = [:gvkey, :date_y], matchmissing = :notequal)
+        on = [:gvkey, :datey], matchmissing = :notequal)
 
     if save
         CSV.write("./tmp/ccm.csv.gz", df_ccm, compress=true)
