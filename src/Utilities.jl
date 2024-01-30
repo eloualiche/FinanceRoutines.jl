@@ -32,10 +32,8 @@ end
 function open_wrds_pg()
     # prompt to input
     print("Enter WRDS username: ...  ") 
-    # Calling rdeadline() function
     user = readline()
-    print("Enter WRDS password: ...  ")   
-    password = readline()
+    password = read(Base.getpass("Enter WRDS password: ...  "), String);
     return open_wrds_pg(user, password);
 end    
 # ------------------------------------------------------------------------------------------

@@ -34,7 +34,7 @@ Import the funda file from CapitalIQ Compustat on WRDS Postgres server
 """
 function import_Funda(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::Vector{String} = nothing,
+    variables::Union{Nothing, Vector{String}} = nothing,
     filter_variables = Dict(:CURCD=>"USD")  # if you want something fanciers ... export variable and do it later
     )
 
@@ -79,7 +79,7 @@ end
 
 function import_Funda(;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::String = nothing,
+    variables::Union{Nothing, Vector{String}} = nothing,
     filter_variables::Dict{Symbol, Any} = Dict(:CURCD=>"USD"),
     user::String = "", password::String = "")
 
