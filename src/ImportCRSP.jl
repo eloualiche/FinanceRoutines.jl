@@ -76,19 +76,8 @@ function import_MSF(wrds_conn::Connection;
     variables::Vector{String} = [""]
     )
 
-# set up the query for msf
-    postgre_query_msf = """
-        SELECT PERMNO,PERMCO,DATE,PRC,ALTPRC,RET,RETX,SHROUT
-            FROM crsp.msf
-            WHERE DATE >= '$(string(date_range[1]))' AND DATE <= '$(string(date_range[2]))'
-    """
-    res_q_msf = execute(wrds_conn, postgre_query_msf)
-    df_msf = DataFrame(columntable(res_q_msf))
-    transform!(df_msf,     # clean up the dataframe
-        names(df_msf, check_integer.(eachcol(df_msf))) .=> (x->convert.(Union{Missing, Int}, x)); 
-        renamecols = false);
 
-    # set up the query for msenames
+    # download potential columns
     postgre_query_msenames_columns= """
     SELECT *
       FROM information_schema.columns
@@ -103,6 +92,34 @@ function import_MSF(wrds_conn::Connection;
         vcat(["PERMNO", "NAMEDT", "NAMEENDT", "SHRCD", "EXCHCD", "HEXCD", "NAICS", "HSICCD", "CUSIP"],
              uppercase.(variables)))
     msenames_columns = join(uppercase.(msenames_columns), ", ")
+
+    postgre_query_msf_columns= """
+    SELECT *
+      FROM information_schema.columns
+     WHERE table_schema = 'crsp'
+       AND table_name   = 'msf'
+         ;
+    """
+    res_q = execute(wrds_conn, postgre_query_msf_columns)
+    msf_columns = DataFrame(columntable(res_q)).column_name ;
+    msf_columns = intersect(
+        uppercase.(msf_columns), 
+        vcat("PERMNO","PERMCO","DATE","PRC","ALTPRC","RET","RETX","SHROUT",
+             uppercase.(variables)))
+    msf_columns = join(uppercase.(msf_columns), ", ")
+
+
+# set up the query for msf
+    postgre_query_msf = """
+        SELECT $msf_columns
+            FROM crsp.msf
+            WHERE DATE >= '$(string(date_range[1]))' AND DATE <= '$(string(date_range[2]))'
+    """
+    res_q_msf = execute(wrds_conn, postgre_query_msf)
+    df_msf = DataFrame(columntable(res_q_msf))
+    transform!(df_msf,     # clean up the dataframe
+        names(df_msf, check_integer.(eachcol(df_msf))) .=> (x->convert.(Union{Missing, Int}, x)); 
+        renamecols = false);
 
     postgre_query_msenames = """
         SELECT $msenames_columns
