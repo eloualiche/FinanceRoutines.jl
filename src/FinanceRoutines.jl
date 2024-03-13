@@ -15,7 +15,7 @@ import FlexiJoins: innerjoin, by_key, by_pred
 import IntervalSets:(..)
 import LibPQ: LibPQ.execute, LibPQ.Connection
 import Missings: Missings, missing
-import MonthlyDates: MonthlyDate
+import PeriodicalDates: MonthlyDate
 import PanelShift: panellag!, tlag
 import ShiftedArrays: lag
 import Tables: columntable

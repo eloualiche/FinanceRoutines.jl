@@ -73,7 +73,7 @@ Import the CRSP Monthly Stock File (MSF) from CRSP on WRDS PostGre server
 """
 function import_MSF(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::String = ""
+    variables::Vector{String} = [""]
     )
 
 # set up the query for msf
@@ -88,27 +88,24 @@ function import_MSF(wrds_conn::Connection;
         names(df_msf, check_integer.(eachcol(df_msf))) .=> (x->convert.(Union{Missing, Int}, x)); 
         renamecols = false);
 
-# set up the query for mse
-    # postgre_query = """
-    #     SELECT DATE, PERMNO, SHRCD, EXCHCD, HEXCD
-    #         FROM crsp.mse
-    #         WHERE EXTRACT('Year' FROM DATE) = 2013
-    # """
-    # res = LibPQ.execute(wrds_conn, postgre_query)
-    # df_mse = DataFrame(columntable(res))
-    # # convert to Int these flag variables
-    # transform!(df_mse, 
-    #     names(df_mse, Union{Missing, Float64}) .=> (x->convert.(Union{Missing, Int}, x)); 
-    #     renamecols = false)
-    # # @rsubset(df_mse, !ismissing(:shrcd) )
-    # df_mse
-    # @rsubset(df_mse, :hexcd ∈ (1, 2, 3) )
-    # @rsubset(df_mse, :shrcd ∈ (10, 11) )
-    # df_mse.permno |> unique
+    # set up the query for msenames
+    postgre_query_msenames_columns= """
+    SELECT *
+      FROM information_schema.columns
+     WHERE table_schema = 'crsp'
+       AND table_name   = 'msenames'
+         ;
+    """
+    res_q = execute(wrds_conn, postgre_query_msenames_columns)
+    msenames_columns = DataFrame(columntable(res_q)).column_name ;
+    msenames_columns = intersect(
+        uppercase.(msenames_columns), 
+        vcat(["PERMNO", "NAMEDT", "NAMEENDT", "SHRCD", "EXCHCD", "HEXCD", "NAICS", "HSICCD", "CUSIP"],
+             uppercase.(variables)))
+    msenames_columns = join(uppercase.(msenames_columns), ", ")
 
-# set up the query for msenames
     postgre_query_msenames = """
-        SELECT PERMNO, NAMEDT, NAMEENDT, SHRCD, EXCHCD, HEXCD, NAICS, HSICCD, CUSIP
+        SELECT $msenames_columns
             FROM crsp.msenames
     """
     res_q_msenames = execute(wrds_conn, postgre_query_msenames)
@@ -140,7 +137,8 @@ function import_MSF(wrds_conn::Connection;
     )
     @rtransform!(df_msf_final, :datem = MonthlyDate(:date) );
     df_msf_final = leftjoin(df_msf_final, df_msedelist, on = [:permno, :datem])
-    select!(df_msf_final, 
+    
+    var_select = unique(vcat(
         :permno, # Security identifier
         :date, # Date of the observation
         :datem,
@@ -152,8 +150,12 @@ function import_MSF(wrds_conn::Connection;
         :hsiccd, # Industry code
         :naics, # Industry code
         :dlret, # Delisting return
-        :dlstcd # Delisting code
-    )
+        :dlstcd, # Delisting code
+        Symbol.(intersect(variables, names(df_msf_final)))
+    ))
+
+    select!(df_msf_final, var_select)
+
     sort!(df_msf_final, [:permno, :date]);
     # unique(df_msf_final, [:permno, :date])
 
