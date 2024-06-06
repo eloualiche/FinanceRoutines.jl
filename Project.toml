@@ -1,7 +1,7 @@
 name = "FinanceRoutines"
 uuid = "2e4c0fa2-b49b-4c8f-9592-485f04b9fc03"
 authors = ["Erik Loualiche <eloualic@umn.edu>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
