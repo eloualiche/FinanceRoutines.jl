@@ -104,7 +104,7 @@ function import_MSF(wrds_conn::Connection;
     msf_columns = DataFrame(columntable(res_q)).column_name ;
     msf_columns = intersect(
         uppercase.(msf_columns), 
-        vcat("PERMNO","PERMCO","DATE","PRC","ALTPRC","RET","RETX","SHROUT",
+        vcat("PERMNO","PERMCO","DATE","PRC","ALTPRC","RET","RETX","SHROUT","CFACPR","CFACSHR",
              uppercase.(variables)))
     msf_columns = join(uppercase.(msf_columns), ", ")
 
@@ -214,11 +214,14 @@ function build_MSF!(df::DataFrame;
     save::String = "", trim_col::Bool = false)
 
  # Check that all necessary variables are in
-    ["mktcap", "shrout", "altprc", "permno", "datem", "dlstcd", "ret", "dlret"]
+    ["mktcap", "shrout", "altprc", "permno", "datem", "dlstcd", "ret", "dlret", 
+     "cfacpr", "cfacshr"]
 
 
 # Create marketcap:
-    @rtransform!(df, :mktcap = abs(:shrout * :altprc)) # in 1000s
+     @rtransform!(df, :mktcap = :shrout * abs(:prc));
+    # @rtransform!(df, :mktcap = :shrout * :cfacshr * abs(:altprc) / :cfacpr) # in 1000s 
+    # in some instances (spin-offs and other distributions we have cfacpr not equal to cfacshr)
     df[ isequal.(df.mktcap, 0), :mktcap] .= missing;
 
 # Lagged marketcap

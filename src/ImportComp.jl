@@ -124,9 +124,9 @@ function build_Funda!(df::DataFrame;
         coalesce(:seq, :ceq + :pstk, :at - :lt) + coalesce(:txditc, :txdb + :itcb, 0) -
         coalesce(:pstkrv, :pstkl, :pstk, 0) )
     df[ isless.(df.be, 0), :be] .= missing;
-    @rtransform!(df, :date_y = year(:datadate));
-    sort!(df, [:gvkey, :date_y, :datadate]) 
-    unique!(df, [:gvkey, :date_y], keep=:last) # last obs
+    @rtransform!(df, :datey = year(:datadate));
+    sort!(df, [:gvkey, :datey, :datadate]) 
+    unique!(df, [:gvkey, :datey], keep=:last) # last obs
 
     verbose && (@info ". Cleaning superfluous columns INDFMT, etc.")
     select!(df, Not(intersect(names(df), ["indfmt","datafmt","consol","popsrc", "curcd"])) )
