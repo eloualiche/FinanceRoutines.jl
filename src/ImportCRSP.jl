@@ -162,6 +162,7 @@ function import_MSF(wrds_conn::Connection;
         :ret, # Return
         :retx, # Return excluding dividends
         :shrout, # Shares outstanding (in thousands)
+        :prc, 
         :altprc, # Last traded price in a month
         :exchcd, # Exchange code
         :hsiccd, # Industry code
@@ -214,7 +215,7 @@ function build_MSF!(df::DataFrame;
     save::String = "", trim_col::Bool = false)
 
  # Check that all necessary variables are in
-    ["mktcap", "shrout", "altprc", "permno", "datem", "dlstcd", "ret", "dlret", 
+    ["mktcap", "shrout", "prc", "permno", "datem", "dlstcd", "ret", "dlret", 
      "cfacpr", "cfacshr"]
 
 
