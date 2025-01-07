@@ -1,11 +1,11 @@
 # ------------------------------------------------------------------------------------------
 # ImportComp.jl
 
-# Collection of functions that import 
+# Collection of functions that import
 #  compustat data into julia
 
 # List of exported functions
-# export import_Funda 
+# export import_Funda
 # export build_Funda
 # ------------------------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@
 # ------------------------------------------------------------------------------------------
 """
     import_Funda(wrds_conn; date_range, variables)
-    import_Funda(; 
+    import_Funda(;
         date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
         variables::String = "", user="", password="")
 
@@ -38,31 +38,31 @@ function import_Funda(wrds_conn::Connection;
     filter_variables = Dict(:CURCD=>"USD")  # if you want something fanciers ... export variable and do it later
     )
 
-    var_funda = ["GVKEY", "DATADATE", "SICH", "FYR", "FYEAR", 
+    var_funda = ["GVKEY", "DATADATE", "SICH", "FYR", "FYEAR",
                  "AT", "LT", "SALE", "EBITDA", "CAPX", "NI", "DV", "CEQ", "CEQL", "SEQ",
                  "TXDITC", "TXP", "TXDB", "ITCB", "DVT", "PSTK","PSTKL", "PSTKRV"]
     !isnothing(variables) && append!(var_funda, uppercase.(variables))
     !isnothing(filter_variables) && append!(var_funda, uppercase.(string.(keys(filter_variables))))
 
 # TODO WE SHOULD PROBABLY KEEP SOMEWHERE AS DATA THE LIST OF VALID COLUMNS
-# THEN THROW A WARNING IF IT DOESNT FIT    
+# THEN THROW A WARNING IF IT DOESNT FIT
     var_check = setdiff(var_funda, compd_funda)
     size(var_check, 1)>0 && (@warn "Queried variables not in dataset ... : $(join(var_check, ","))")
-    filter!(in(compd_funda), var_funda) 
+    filter!(in(compd_funda), var_funda)
 
 # set up the query for funda
     postgre_query_funda_full = """
         SELECT *
             FROM comp.funda
             WHERE INDFMT = 'INDL' AND DATAFMT = 'STD' AND CONSOL = 'C' AND POPSRC = 'D'
-                AND DATADATE >= '$(string(date_range[1]))' 
+                AND DATADATE >= '$(string(date_range[1]))'
                 AND DATADATE <= '$(string(date_range[2]))'
     """
     postgre_query_funda_var = """
         SELECT $(join(unique(var_funda), ","))
             FROM comp.funda
             WHERE INDFMT = 'INDL' AND DATAFMT = 'STD' AND CONSOL = 'C' AND POPSRC = 'D'
-                AND DATADATE >= '$(string(date_range[1]))' 
+                AND DATADATE >= '$(string(date_range[1]))'
                 AND DATADATE <= '$(string(date_range[2]))'
     """
     res_q_funda = execute(wrds_conn, postgre_query_funda_var)
@@ -70,12 +70,12 @@ function import_Funda(wrds_conn::Connection;
 
     # run the filter
     !isnothing(filter_variables) && for (key, value) in Dict(lowercase(string(k)) => v for (k, v) in filter_variables)
-        filter!(row -> (ismissing(row[key])) | (row[key] == value), df_funda) # we keep missing ... 
+        filter!(row -> (ismissing(row[key])) | (row[key] == value), df_funda) # we keep missing ...
     end
 
     # clean up the dataframe
-    transform!(df_funda, 
-        names(df_funda, check_integer.(eachcol(df_funda))) .=> (x->convert.(Union{Missing, Int}, x)); 
+    transform!(df_funda,
+        names(df_funda, check_integer.(eachcol(df_funda))) .=> (x->convert.(Union{Missing, Int}, x));
         renamecols = false)
     df_funda[!, :gvkey] .= parse.(Int, df_funda[!, :gvkey]);
 
@@ -121,17 +121,17 @@ function build_Funda!(df::DataFrame;
     save::String = "",
     verbose::Bool = false
     )
-    
+
     verbose && (@info "--- Creating clean funda panel")
 
     # define book equity value
     verbose && (@info ". Creating book equity")
-    @transform!(df, :be = 
+    @transform!(df, :be =
         coalesce(:seq, :ceq + :pstk, :at - :lt) + coalesce(:txditc, :txdb + :itcb, 0) -
         coalesce(:pstkrv, :pstkl, :pstk, 0) )
     df[ isless.(df.be, 0), :be] .= missing;
     @rtransform!(df, :datey = year(:datadate));
-    sort!(df, [:gvkey, :datey, :datadate]) 
+    sort!(df, [:gvkey, :datey, :datadate])
     unique!(df, [:gvkey, :datey], keep=:last) # last obs
 
     verbose && (@info ". Cleaning superfluous columns INDFMT, etc.")
