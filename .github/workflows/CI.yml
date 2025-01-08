@@ -16,6 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       WRDS_USERNAME: ${{ secrets.WRDS_USERNAME }}
+      WRDS_PWD: ${{ secrets.WRDS_PWD }}
     strategy:
       fail-fast: false
       matrix:
