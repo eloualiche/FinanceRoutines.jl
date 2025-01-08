@@ -1,17 +1,17 @@
 # FinanceRoutines
 
-| **Documentation**                                                               | **Build Status**                                                                                |
-|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![CI Testing](https://github.com/eloualiche/FinanceRoutines.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/eloualiche/FinanceRoutines.jl/actions/workflows/CI.yml?query=branch%3Amain) |
+| **Documentation**                                                               | **Build Status**                                                                                | **Code Coverage**                                                                                |
+|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|
+| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![CI Testing](https://github.com/eloualiche/FinanceRoutines.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/eloualiche/FinanceRoutines.jl/actions/workflows/CI.yml?query=branch%3Amain) | [![codecov](https://codecov.io/gh/eloualiche/FinanceRoutines.jl/graph/badge.svg?token=A6IYNO17NK)](https://codecov.io/gh/eloualiche/FinanceRoutines.jl)
 
 
-`FinanceRoutines.jl` is a package that contains useful functions to download and process academic financial data. 
+`FinanceRoutines.jl` is a package that contains useful functions to download and process academic financial data.
 
 So far the package provides function to import:
-  
+
   - CRSP and Compustat from the WRDS Postgres server
   - Fama-French three factors series from Ken French's website
-  - GSW Yield curves from the [NY Fed](https://www.federalreserve.gov/pubs/feds/2006/200628/200628abs.html) 
+  - GSW Yield curves from the [NY Fed](https://www.federalreserve.gov/pubs/feds/2006/200628/200628abs.html)
 
 
 ## Installation
@@ -77,8 +77,8 @@ select(df_GSW, :date, :yield_1y)
 
 ## Othere references to work with financial data
 
-The package the closest to this one is 
-  
+The package the closest to this one is
+
 - [WrdsMerger.jl](https://github.com/junder873/WRDSMerger.jl); WrdsMerger is probably in a more stable state than this package.
 
 
