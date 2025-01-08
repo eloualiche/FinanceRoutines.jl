@@ -33,24 +33,24 @@ Import the funda file from CapitalIQ Compustat on WRDS Postgres server
 - `df_funda::DataFrame`: DataFrame with compustat funda file
 """
 function import_Funda(wrds_conn::Connection;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::Union{Nothing, Vector{String}} = nothing,
-    filter_variables = Dict(:CURCD=>"USD")  # if you want something fanciers ... export variable and do it later
-    )
+    date_range::Tuple{Date,Date}=(Date("1900-01-01"), Dates.today()),
+    variables::Union{Nothing,Vector{String}}=nothing,
+    filter_variables=Dict(:CURCD => "USD")  # if you want something fanciers ... export variable and do it later
+)
 
     var_funda = ["GVKEY", "DATADATE", "SICH", "FYR", "FYEAR",
-                 "AT", "LT", "SALE", "EBITDA", "CAPX", "NI", "DV", "CEQ", "CEQL", "SEQ",
-                 "TXDITC", "TXP", "TXDB", "ITCB", "DVT", "PSTK","PSTKL", "PSTKRV"]
+        "AT", "LT", "SALE", "EBITDA", "CAPX", "NI", "DV", "CEQ", "CEQL", "SEQ",
+        "TXDITC", "TXP", "TXDB", "ITCB", "DVT", "PSTK", "PSTKL", "PSTKRV"]
     !isnothing(variables) && append!(var_funda, uppercase.(variables))
     !isnothing(filter_variables) && append!(var_funda, uppercase.(string.(keys(filter_variables))))
 
-# TODO WE SHOULD PROBABLY KEEP SOMEWHERE AS DATA THE LIST OF VALID COLUMNS
-# THEN THROW A WARNING IF IT DOESNT FIT
+    # TODO WE SHOULD PROBABLY KEEP SOMEWHERE AS DATA THE LIST OF VALID COLUMNS
+    # THEN THROW A WARNING IF IT DOESNT FIT
     var_check = setdiff(var_funda, compd_funda)
-    size(var_check, 1)>0 && (@warn "Queried variables not in dataset ... : $(join(var_check, ","))")
+    size(var_check, 1) > 0 && (@warn "Queried variables not in dataset ... : $(join(var_check, ","))")
     filter!(in(compd_funda), var_funda)
 
-# set up the query for funda
+    # set up the query for funda
     postgre_query_funda_full = """
         SELECT *
             FROM comp.funda
@@ -66,7 +66,7 @@ function import_Funda(wrds_conn::Connection;
                 AND DATADATE <= '$(string(date_range[2]))'
     """
     res_q_funda = execute(wrds_conn, postgre_query_funda_var)
-    df_funda = DataFrame(columntable(res_q_funda));
+    df_funda = DataFrame(columntable(res_q_funda))
 
     # run the filter
     !isnothing(filter_variables) && for (key, value) in Dict(lowercase(string(k)) => v for (k, v) in filter_variables)
@@ -75,19 +75,19 @@ function import_Funda(wrds_conn::Connection;
 
     # clean up the dataframe
     transform!(df_funda,
-        names(df_funda, check_integer.(eachcol(df_funda))) .=> (x->convert.(Union{Missing, Int}, x));
-        renamecols = false)
-    df_funda[!, :gvkey] .= parse.(Int, df_funda[!, :gvkey]);
+        names(df_funda, check_integer.(eachcol(df_funda))) .=> (x -> convert.(Union{Missing,Int}, x));
+        renamecols=false)
+    df_funda[!, :gvkey] .= parse.(Int, df_funda[!, :gvkey])
 
     return df_funda
 
 end
 
 function import_Funda(;
-    date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::Union{Nothing, Vector{String}} = nothing,
-    filter_variables::Dict{Symbol, Any} = Dict(:CURCD=>"USD"),
-    user::String = "", password::String = "")
+    date_range::Tuple{Date,Date}=(Date("1900-01-01"), Dates.today()),
+    variables::Union{Nothing,Vector{String}}=nothing,
+    filter_variables::Dict{Symbol,Any}=Dict(:CURCD => "USD"),
+    user::String="", password::String="")
 
     if user == ""
         wrds_conn = open_wrds_pg()
@@ -113,14 +113,16 @@ Clean up the compustat funda file download from crsp (see `import_Funda`)
 
 # Keywords
 - `save::String`: Save a gzip version of the data on path `\$save/funda.csv.gz`; Default does not save the data.
+- `clean_cols::Bool`: Clean up the columns of the dataframe to be of type Float64; Default is `false` and leaves the Decimal type intact
 
 # Returns
 - `df_funda::DataFrame`: DataFrame with compustat funda file "cleaned"
 """
 function build_Funda!(df::DataFrame;
-    save::String = "",
-    verbose::Bool = false
-    )
+    save::String="",
+    clean_cols::Bool=false,
+    verbose::Bool=false
+)
 
     verbose && (@info "--- Creating clean funda panel")
 
@@ -128,14 +130,23 @@ function build_Funda!(df::DataFrame;
     verbose && (@info ". Creating book equity")
     @transform!(df, :be =
         coalesce(:seq, :ceq + :pstk, :at - :lt) + coalesce(:txditc, :txdb + :itcb, 0) -
-        coalesce(:pstkrv, :pstkl, :pstk, 0) )
-    df[ isless.(df.be, 0), :be] .= missing;
-    @rtransform!(df, :datey = year(:datadate));
+        coalesce(:pstkrv, :pstkl, :pstk, 0))
+    df[isless.(df.be, 0), :be] .= missing
+    @rtransform!(df, :datey = year(:datadate))
     sort!(df, [:gvkey, :datey, :datadate])
     unique!(df, [:gvkey, :datey], keep=:last) # last obs
 
     verbose && (@info ". Cleaning superfluous columns INDFMT, etc.")
-    select!(df, Not(intersect(names(df), ["indfmt","datafmt","consol","popsrc", "curcd"])) )
+    select!(df, Not(intersect(names(df), ["indfmt", "datafmt", "consol", "popsrc", "curcd"])))
+
+    if clean_cols
+        verbose && (@info ". Converting decimal type columns to Float64.")
+        for col in names(df)
+            if eltype(df[!, col]) == Union{Missing,Decimals.Decimal}
+                df[!, col] = convert.(Union{Missing,Float64}, df[!, col])
+            end
+        end
+    end
 
     if !(save == "")
         verbose && (@info ". Saving to $save/funda.csv.gz")
