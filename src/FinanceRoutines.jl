@@ -7,9 +7,10 @@ import ZipFile
 import CSV
 import DataFrames: DataFrame, ByRow, groupby, nrow, passmissing, Not,
   rename!, select, select!, groupby, transform!, leftjoin, disallowmissing!
-import DataFramesMeta: DataFramesMeta, 
+import DataFramesMeta: DataFramesMeta,
   @passmissing, @subset!, @rsubset!, @transform!, @rtransform!
 import Dates: Dates, Date, Day, Month, year
+import Decimals: Decimal
 import Downloads: Downloads.download
 import FlexiJoins: innerjoin, by_key, by_pred
 import IntervalSets:(..)
