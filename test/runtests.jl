@@ -1,14 +1,14 @@
-# ---------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 using FinanceRoutines
 using Test
 
 import DataFrames: DataFrame, nrow, rename!
-import Dates: Date
+import Dates: Date, year
 import LibPQ: Connection
-# ---------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 
 
-# ---------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 @testset "FinanceRoutines.jl" begin
     # Write your tests here.
 
@@ -42,7 +42,7 @@ import LibPQ: Connection
         wrds_conn = FinanceRoutines.open_wrds_pg(WRDS_USERNAME, WRDS_PWD)
         @test typeof(wrds_conn) == Connection
 
-        @testset "MSF" begin
+        @testset "CRSP MSF" begin
             df_msf = import_MSF(wrds_conn; date_range = (Date("2000-01-01"), Date("2002-01-01")));
             build_MSF!(df_msf; clean_cols=true);
 
@@ -51,7 +51,23 @@ import LibPQ: Connection
             @test nrow(df_msf) > 100_000
         end
 
+        @testset "Compustat FUNDA" begin
+            df_funda = import_Funda(wrds_conn;
+                date_range = (Date("2000-01-01"), Date("2002-01-01")),
+                variables=["PPENT", "NAICSH", "NAICS"])
+            build_Funda!(df_funda; clean_cols=true)
+
+            # check basic properties of the DataFrame (mainly that it has downloaded)
+            @test minimum(skipmissing(df_funda.datey)) >= year(Date("2000-01-01"))
+            @test maximum(skipmissing(df_funda.datey)) <= year(Date("2002-01-01"))
+            @test nrow(df_funda) > 20_000
+
+            # check that the variables are downloaded and in the dataframe
+            @test all(map(s -> s in names(df_funda), lowercase.(["PPENT", "NAICSH"])))
+
+        end
+
     end
 
 end
-# ---------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
