@@ -142,7 +142,7 @@ function build_Funda!(df::DataFrame;
     if clean_cols
         verbose && (@info ". Converting decimal type columns to Float64.")
         for col in names(df)
-            if eltype(df[!, col]) == Union{Missing,Decimals.Decimal}
+            if eltype(df[!, col]) == Union{Missing,Decimal}
                 df[!, col] = convert.(Union{Missing,Float64}, df[!, col])
             end
         end
