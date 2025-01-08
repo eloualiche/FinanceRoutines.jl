@@ -28,15 +28,19 @@ import Dates: Date
     end
 
     @testset "WRDS tests ... deal with credentials and all" begin
-        # build_crsp
-        # wrds_conn = FinanceRoutines.open_wrds_pg()
-        # df_msf = import_MSF(wrds_conn; date_range = (Date("2000-01-01"), Date("2002-01-01")));
-        # build_MSF!(df_msf; clean_cols=true);
         WRDS_USERNAME = get(ENV, "WRDS_USERNAME", "")
-        if isempty(WRDS_USERNAME)
-            @warn "WRDS_USERNAME not found in environment variables"
+        isempty(WRDS_USERNAME) && (@warn "WRDS_USERNAME not found in environment variables")
         @test WRDS_USERNAME == "test"
     end
+
+    @testset "WRDS tests ... downloads and build" begin
+        # WRDS_USERNAME = get(ENV, "WRDS_USERNAME", "")
+        # WRDS_PWD = get(ENV, "WRDS_PWD", "")
+        # wrds_conn = FinanceRoutines.open_wrds_pg(WRDS_USERNAME, WRDS_PWD)
+        # df_msf = import_MSF(wrds_conn; date_range = (Date("2000-01-01"), Date("2002-01-01")));
+        # build_MSF!(df_msf; clean_cols=true);
+    end
+
 
 end
 # ---------------------------------------------------------
