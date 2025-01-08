@@ -4,6 +4,7 @@ using Test
 
 import DataFrames: DataFrame, nrow, rename!
 import Dates: Date
+import LibPQ: Connection
 # ---------------------------------------------------------
 
 
@@ -29,18 +30,28 @@ import Dates: Date
 
     @testset "WRDS tests ... deal with credentials and all" begin
         WRDS_USERNAME = get(ENV, "WRDS_USERNAME", "")
-        isempty(WRDS_USERNAME) && (@warn "WRDS_USERNAME not found in environment variables")
-        @test WRDS_USERNAME == "test"
+        WRDS_PWD = get(ENV, "WRDS_PWD", "")
+        @test !isempty(WRDS_USERNAME)
+        @test !isempty(WRDS_PWD)
     end
 
     @testset "WRDS tests ... downloads and build" begin
-        # WRDS_USERNAME = get(ENV, "WRDS_USERNAME", "")
-        # WRDS_PWD = get(ENV, "WRDS_PWD", "")
-        # wrds_conn = FinanceRoutines.open_wrds_pg(WRDS_USERNAME, WRDS_PWD)
-        # df_msf = import_MSF(wrds_conn; date_range = (Date("2000-01-01"), Date("2002-01-01")));
-        # build_MSF!(df_msf; clean_cols=true);
-    end
+        WRDS_USERNAME = get(ENV, "WRDS_USERNAME", "")
+        WRDS_PWD = get(ENV, "WRDS_PWD", "")
 
+        wrds_conn = FinanceRoutines.open_wrds_pg(WRDS_USERNAME, WRDS_PWD)
+        @test typeof(wrds_conn) == Connection
+
+        @testset "MSF" begin
+            df_msf = import_MSF(wrds_conn; date_range = (Date("2000-01-01"), Date("2002-01-01")));
+            build_MSF!(df_msf; clean_cols=true);
+
+            @test minimum(skipmissing(df_msf.date)) >= Date("2000-01-01")
+            @test maximum(skipmissing(df_msf.date)) <= Date("2002-01-01")
+            @test nrow(df_msf) > 100_000
+        end
+
+    end
 
 end
 # ---------------------------------------------------------

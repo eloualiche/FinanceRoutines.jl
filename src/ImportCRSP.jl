@@ -65,8 +65,6 @@ Import the CRSP Monthly Stock File (MSF) from CRSP on WRDS PostGre server
 # Keywords
 - `date_range::Tuple{Date, Date}`: A tuple of dates to select data (limits the download size)
 - `variables::Vector{String}`: A vector of String of additional variable to include in the download
-- `user::String`: username to log into the WRDS cli; default to ask user for authentication
-- `password::String`: password to log into the WRDS cli
 
 # Returns
 - `df_msf_final::DataFrame`: DataFrame with msf crsp file
