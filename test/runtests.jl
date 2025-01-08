@@ -34,7 +34,7 @@ import Dates: Date
         # build_MSF!(df_msf; clean_cols=true);
         WRDS_USERNAME = get(ENV, "WRDS_USERNAME", "")
         if isempty(WRDS_USERNAME)
-            @warn "WRDS_USERNAME not found in environment variables")
+            @warn "WRDS_USERNAME not found in environment variables"
         @test WRDS_USERNAME == "test"
     end
 
