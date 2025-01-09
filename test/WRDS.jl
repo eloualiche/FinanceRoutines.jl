@@ -1,5 +1,9 @@
 @testset verbose=true "WRDS tests ... downloads and build" begin
 
+    import DataFrames: DataFrame, nrow, rename!
+    import Dates: Date, year, day
+    import LibPQ: Connection
+
     WRDS_USERNAME = get(ENV, "WRDS_USERNAME", "");
     WRDS_PWD = get(ENV, "WRDS_PWD", "");
 
@@ -15,6 +19,17 @@
         @test maximum(skipmissing(df_msf.date)) <= Date("2002-01-01")
         @test nrow(df_msf) > 100_000
     end
+
+    @testset "CRSP DSF" begin
+        println("\033[1m\033[32m    → running\033[0m: CRSP DSF")
+        df_dsf = import_DSF(wrds_conn; date_range = (Date("2002-02-01"), Date("2002-02-05")) )
+
+        @test nrow(df_dsf) > 20_000
+        @test size(unique(day.(df_dsf.date)), 1)  > 1
+        @test all(map(s -> s in names(df_dsf),
+            lowercase.(["PERMNO", "DATE", "RET", "PRC", "SHROUT", "VOL"])))
+    end
+
 
     @testset "Compustat FUNDA" begin
         println("\033[1m\033[32m    → running\033[0m: Compustat FUNDA")

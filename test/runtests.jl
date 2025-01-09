@@ -2,12 +2,8 @@
 using FinanceRoutines
 using Test
 
-import DataFrames: DataFrame, nrow, rename!
-import Dates: Date, year
-import LibPQ: Connection
-
 const testsuite = [
-    "KenFrench", "WRDS"
+    "KenFrench", "WRDS", "Yields"
 ]
 # --------------------------------------------------------------------------------------------------
 
@@ -51,7 +47,7 @@ end
     # Actual tests
     for test in testsuite
         println("\033[1m\033[32m  → RUNNING\033[0m: $(test)")
-        include("$test.jl")
+        include("$(test).jl")
         println("\033[1m\033[32m  PASSED\033[0m")
     end
 

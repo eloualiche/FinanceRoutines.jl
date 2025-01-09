@@ -300,7 +300,6 @@ end
 # ------------------------------------------------------------------------------------------
 function import_DSF(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::String
     )
 
 # set up the query for msf
