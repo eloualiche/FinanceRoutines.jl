@@ -182,8 +182,8 @@ end
 # when there are no connections establisheds
 function import_MSF(;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
-    variables::String = "",
-    user::String = "", password::String = "")
+    variables::AbstractString = "",
+    user::AbstractString = "", password::AbstractString = "")
 
     if user == ""
         wrds_conn = open_wrds_pg()
@@ -214,7 +214,7 @@ Clean up the CRSP Monthly Stock File (see `import_MSF`)
 - `df::DataFrame`: DataFrame with crsp MSF file "cleaned"
 """
 function build_MSF!(df::DataFrame;
-    save::String = "",
+    save::AbstractString = "",
     trim_cols::Bool = false,
     clean_cols::Bool=false,
     verbose::Bool=false
@@ -277,7 +277,8 @@ function build_MSF(wrds_conn::Connection;
     )
 
     df = import_MSF(wrds_conn; date_range=date_range);
-    df = build_MSF(df, save = save, trim_cols = trim_cols, clean_cols = clean_cols)
+    build_MSF!(df, save = save, trim_cols = trim_cols, clean_cols = clean_cols)
+
     return df
 end
 
@@ -321,8 +322,8 @@ end
 # when there are no connections establisheds
 function import_DSF(;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    variables::String = "",
-    user::String = "", password::String = "")
+    variables::AbstractString = "",
+    user::AbstractString = "", password::AbstractString = "")
 
     if user == ""
         wrds_conn = open_wrds_pg()

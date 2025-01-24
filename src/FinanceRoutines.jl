@@ -51,7 +51,7 @@ export import_FF3
 # -- CRSP
 export import_MSF             # import Monthly Stock File
 export import_DSF             # import Daily Stock File
-export build_MSF!              # clean Monthly Stock File
+export build_MSF, build_MSF!              # clean Monthly Stock File
 # -- Funda
 export import_Funda
 export build_Funda!
