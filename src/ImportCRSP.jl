@@ -214,7 +214,7 @@ Clean up the CRSP Monthly Stock File (see `import_MSF`)
 - `df::DataFrame`: DataFrame with crsp MSF file "cleaned"
 """
 function build_MSF!(df::DataFrame;
-    save::AbstractString = "",
+    save::AbstractString = nothing,
     trim_cols::Bool = false,
     clean_cols::Bool=false,
     verbose::Bool=false
@@ -261,7 +261,8 @@ function build_MSF!(df::DataFrame;
         end
     end
 
-    if !(save == "")
+    if !isnothing(save)
+        !isdir(save) && throw(ArgumentError("save argument referes to a non-existing directory: $save"))
         CSV.write(save * "/msf.csv.gz", df, compress=true)
     end
 
@@ -271,7 +272,7 @@ end
 
 function build_MSF(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    save::Bool = false,
+    save::AbstractString = nothing,
     trim_cols::Bool = false,
     clean_cols::Bool=false
     )
@@ -285,7 +286,7 @@ end
 
 function build_MSF(;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    save::Bool = false,
+    save::AbstractString = nothing,
     trim_cols::Bool = false,
     clean_cols::Bool=false
     )

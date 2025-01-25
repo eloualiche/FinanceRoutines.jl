@@ -19,21 +19,24 @@ end
 function open_wrds_pg(user::AbstractString, password::AbstractString)
     wrds_conn = Connection(
         """
-            host = wrds-pgdata.wharton.upenn.edu 
+            host = wrds-pgdata.wharton.upenn.edu
             port = 9737
-            user='$user' 
+            user='$user'
             password='$password'
             sslmode = 'require' dbname = wrds
         """
     )
     return wrds_conn
-end    
+end
 
 function open_wrds_pg()
     # prompt to input
-    print("Enter WRDS username: ") 
+    print("Enter WRDS username: ")
     user = readline()
-    password = read(Base.getpass("Enter WRDS password"), String);
-    return open_wrds_pg(user, password);
-end    
+    password_buffer = Base.getpass("Enter WRDS password")
+    # con = open_wrds_pg(user, String(password_buffer.data[1:password_buffer.size]));
+    con = open_wrds_pg(user, read(password_buffer, String))
+    Base.shred!(password_buffer)
+    return con
+end
 # ------------------------------------------------------------------------------------------
