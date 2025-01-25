@@ -256,8 +256,10 @@ function build_MSF!(
     if clean_cols
         verbose && (@info ". Converting decimal type columns to Float64.")
         for col in names(df)
-            if eltype(df[!, col]) == Union{Missing,Decimal}
+            if eltype(df[!, col]) == Union{Missing,Decimal} || eltype(df[!, col]) <: Union{Missing,AbstractFloat}
                 df[!, col] = convert.(Union{Missing,Float64}, df[!, col])
+            elseif eltype(df[!, col]) == Decimal || eltype(df[!, col]) <: AbstractFloat
+                df[!, col] = Float64.(df[!, col])
             end
         end
     end
