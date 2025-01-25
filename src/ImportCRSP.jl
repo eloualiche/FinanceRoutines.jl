@@ -198,7 +198,7 @@ end
 
 # ------------------------------------------------------------------------------------------
 """
-    build_MSF!(df_msf::DataFrame; save, trim_cols, clean_cols)
+    build_MSF!(df_msf::DataFrame; save, trim_cols, clean_cols, verbose)
 
 Clean up the CRSP Monthly Stock File (see `import_MSF`)
 
@@ -213,8 +213,9 @@ Clean up the CRSP Monthly Stock File (see `import_MSF`)
 # Returns
 - `df::DataFrame`: DataFrame with crsp MSF file "cleaned"
 """
-function build_MSF!(df::DataFrame;
-    save::AbstractString = nothing,
+function build_MSF!(
+    df::AbstractDataFrame;
+    save::AbstractString = "",
     trim_cols::Bool = false,
     clean_cols::Bool=false,
     verbose::Bool=false
@@ -261,7 +262,7 @@ function build_MSF!(df::DataFrame;
         end
     end
 
-    if !isnothing(save)
+    if !isempty(save)
         !isdir(save) && throw(ArgumentError("save argument referes to a non-existing directory: $save"))
         CSV.write(save * "/msf.csv.gz", df, compress=true)
     end
@@ -269,10 +270,24 @@ function build_MSF!(df::DataFrame;
     return df
 end
 
+# --
+function build_MSF(
+    df::AbstractDataFrame;
+    save::AbstractString = "",
+    trim_cols::Bool = false,
+    clean_cols::Bool=false,
+    verbose::Bool=false
+    )
 
+    df_res = copy(df)
+    build_MSF!(df_res, save = save, trim_cols = trim_cols, clean_cols = clean_cols, verbose = verbose)
+    return df_res
+end
+
+# --
 function build_MSF(wrds_conn::Connection;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    save::AbstractString = nothing,
+    save::AbstractString = "",
     trim_cols::Bool = false,
     clean_cols::Bool=false
     )
@@ -283,16 +298,16 @@ function build_MSF(wrds_conn::Connection;
     return df
 end
 
-
+# --
 function build_MSF(;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Dates.today()),
-    save::AbstractString = nothing,
+    save::AbstractString = "",
     trim_cols::Bool = false,
     clean_cols::Bool=false
     )
 
     df = import_MSF(;date_range);
-    df = build_MSF(df, save = save, trim_cols = trim_cols, clean_cols = clean_cols)
+    build_MSF!(df, save = save, trim_cols = trim_cols, clean_cols = clean_cols)
 
     return df
 end

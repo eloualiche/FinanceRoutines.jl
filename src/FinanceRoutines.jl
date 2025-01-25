@@ -5,7 +5,7 @@ module FinanceRoutines
 import Downloads
 import ZipFile
 import CSV
-import DataFrames: DataFrame, ByRow, groupby, nrow, passmissing, Not,
+import DataFrames: AbstractDataFrame, DataFrame, ByRow, groupby, nrow, passmissing, Not,
   rename!, select, select!, groupby, transform!, leftjoin, disallowmissing!
 import DataFramesMeta: DataFramesMeta,
   @passmissing, @subset!, @rsubset!, @transform!, @rtransform!
