@@ -29,7 +29,7 @@ Pkg.add("https://github.com/eloualiche/FinanceRoutines.jl")
 
   - Demos to how this integrates into standard estimations
     + See how to estimate asset pricing betas in the [Estimating Beta](@ref) demo.
-
+    + Build general queries for the WRDS postgres in [Advanced WRDS](@ref)
 
 ## Other Resources
 

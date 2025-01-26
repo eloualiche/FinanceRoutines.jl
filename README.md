@@ -68,14 +68,18 @@ estimate_yield_GSW!(df_GSW; maturity=1); # maturity is in years
 select(df_GSW, :date, :yield_1y)
 ```
 
+### Common operations in asset pricing
+
+Look in the documentation for a guide on how to estimate betas: over the whole sample and using rolling regressions.
+The package exports the function `calculate_rolling_betas`.
+
 
 ## To Do
 
   - `olsgmm` from cochrane GMM code
-  - rolling regressions
 
 
-## Othere references to work with financial data
+## Other references to work with financial data
 
 The package the closest to this one is
 

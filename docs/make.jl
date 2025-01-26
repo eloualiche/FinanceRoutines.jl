@@ -16,7 +16,8 @@ makedocs(
             "man/wrds_guide.md"
         ],
         "Demos" => [
-            "demo/beta.md"
+            "demo/beta.md",
+            "demo/wrds_advanced.md"
         ],
         "Library" => [
             "lib/public.md",

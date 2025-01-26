@@ -104,7 +104,7 @@ combine(groupby(df_msf, :datem), :bMKT .=>
     [(x-> emptymissing(mean)(skipmissing(x))) (x-> emptymissing(median)(skipmissing(x)))] .=>
     [:bMKT_mean :bMKT_median])
 ```
-Go make some coffee ... this takes a little while (~ 60mn on M2max macbook pro). 
+Go make some coffee ... this takes a little while (~ 15mn on M2max macbook pro). 
 I don't think my method is super efficient 
 
 
