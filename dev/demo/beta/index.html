@@ -39,4 +39,29 @@ for subdf in groupby(df_msf, :permno)
     end
 end
 unique(df_msf, r&quot;β&quot;)
-select(unique(df_msf, r&quot;β&quot;), :permno, :β_MKT, :β_SMB, :β_HML)</code></pre><h2 id="Rolling-betas"><a class="docs-heading-anchor" href="#Rolling-betas">Rolling betas</a><a id="Rolling-betas-1"></a><a class="docs-heading-anchor-permalink" href="#Rolling-betas" title="Permalink"></a></h2><p>...</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../man/wrds_guide/">« WRDS User Guide</a><a class="docs-footer-nextpage" href="../../lib/public/">Public Interface »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Saturday 25 January 2025 03:09">Saturday 25 January 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+select(unique(df_msf, r&quot;β&quot;), :permno, :β_MKT, :β_SMB, :β_HML)</code></pre><h2 id="Rolling-betas"><a class="docs-heading-anchor" href="#Rolling-betas">Rolling betas</a><a id="Rolling-betas-1"></a><a class="docs-heading-anchor-permalink" href="#Rolling-betas" title="Permalink"></a></h2><p>I export a very simple function for rolling betas (see the test for examples). </p><p>First we prepare the basic dataset from the monthly stock file and the Fama-French risk factors for example</p><pre><code class="language-julia hljs"># Get individual stock returns
+df_msf = build_MSF(date_range = (Date(&quot;1980-01-01&quot;), Dates.today()), clean_cols=true); 
+select!(df_msf, :permno, :date, :datem, :ret, :mktcap)
+# Get the monthly factor returns
+df_FF3 = import_FF3()
+transform!(df_FF3, [:mktrf, :smb, :hml, :rf] .=&gt; ByRow((x-&gt;x/100)), renamecols=false)
+# merge and create excess returns
+df_msf = leftjoin(df_msf, df_FF3, on = [:datem] )
+@rtransform!(df_msf, :ret_rf = :ret - :rf)
+sort!(df_msf, [:permno, :date])</code></pre><p>Now we are ready to run the regression using the function <code>calculate_rolling_betas</code> that the package exports</p><pre><code class="language-julia hljs">@rtransform!(df_msf, :a=missing, :bMKT=missing, :bSMB=missing, :bHML=missing)
+
+@time for subdf in groupby(df_msf, :permno)
+    β = calculate_rolling_betas(
+        [ones(nrow(subdf)) subdf.mktrf subdf.smb subdf.hml],
+        subdf.ret_rf; 
+        window=60,         # 60 months
+        min_data=nothing,   # what is the minimum number of nonmissing data to return a proper number
+        method=:linalg
+    )
+    subdf[!, [:a, :bMKT, :bSMB, :bHML]] = β
+end
+
+import Statistics: median, mean
+combine(groupby(df_msf, :datem), :bMKT .=&gt; 
+    [(x-&gt; emptymissing(mean)(skipmissing(x))) (x-&gt; emptymissing(median)(skipmissing(x)))] .=&gt;
+    [:bMKT_mean :bMKT_median])</code></pre><p>Go make some coffee ... this takes a little while (~ 60mn on M2max macbook pro).  I don&#39;t think my method is super efficient </p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../man/wrds_guide/">« WRDS User Guide</a><a class="docs-footer-nextpage" href="../../lib/public/">Public Interface »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Sunday 26 January 2025 02:47">Sunday 26 January 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
