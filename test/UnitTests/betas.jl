@@ -55,7 +55,6 @@
     df_firms = gen_dataset()
     @rtransform!(df_firms, :a=missing, :bmkt=missing, :bF1=missing, :bF2=missing)
     for subdf in groupby(df_firms, :firm_id)
-        # subdf = groupby(df_firms, :firm_id)[1]
         β = calculate_rolling_betas(
             [ones(nrow(subdf)) subdf.mkt subdf.F1 subdf.F2],
             subdf.ret; 
