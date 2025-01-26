@@ -68,9 +68,44 @@ select(unique(df_msf, r"β"), :permno, :β_MKT, :β_SMB, :β_HML)
 
 ## Rolling betas
 
-...
+I export a very simple function for rolling betas (see the test for examples). 
 
+First we prepare the basic dataset from the monthly stock file and the Fama-French risk factors for example
+```julia
+# Get individual stock returns
+df_msf = build_MSF(date_range = (Date("1980-01-01"), Dates.today()), clean_cols=true); 
+select!(df_msf, :permno, :date, :datem, :ret, :mktcap)
+# Get the monthly factor returns
+df_FF3 = import_FF3()
+transform!(df_FF3, [:mktrf, :smb, :hml, :rf] .=> ByRow((x->x/100)), renamecols=false)
+# merge and create excess returns
+df_msf = leftjoin(df_msf, df_FF3, on = [:datem] )
+@rtransform!(df_msf, :ret_rf = :ret - :rf)
+sort!(df_msf, [:permno, :date])
+```
 
+Now we are ready to run the regression using the function `calculate_rolling_betas` that the package exports
+```julia
+@rtransform!(df_msf, :a=missing, :bMKT=missing, :bSMB=missing, :bHML=missing)
+
+@time for subdf in groupby(df_msf, :permno)
+    β = calculate_rolling_betas(
+        [ones(nrow(subdf)) subdf.mktrf subdf.smb subdf.hml],
+        subdf.ret_rf; 
+        window=60,         # 60 months
+        min_data=nothing,   # what is the minimum number of nonmissing data to return a proper number
+        method=:linalg
+    )
+    subdf[!, [:a, :bMKT, :bSMB, :bHML]] = β
+end
+
+import Statistics: median, mean
+combine(groupby(df_msf, :datem), :bMKT .=> 
+    [(x-> emptymissing(mean)(skipmissing(x))) (x-> emptymissing(median)(skipmissing(x)))] .=>
+    [:bMKT_mean :bMKT_median])
+```
+Go make some coffee ... this takes a little while (~ 60mn on M2max macbook pro). 
+I don't think my method is super efficient 
 
 
 

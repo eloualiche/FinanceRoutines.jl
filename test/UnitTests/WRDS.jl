@@ -1,6 +1,5 @@
 @testset verbose=true "WRDS tests ... downloads and build" begin
 
-    import DataFrames: DataFrame, nrow, rename!
     import Dates: Date, year, day
     import LibPQ: Connection
 

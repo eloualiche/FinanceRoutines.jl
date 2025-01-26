@@ -13,9 +13,11 @@ import Dates: Dates, Date, Day, Month, year
 import Decimals: Decimal
 import Downloads: Downloads.download
 import FlexiJoins: innerjoin, by_key, by_pred
+import GLM: coef, lm
 import IntervalSets:(..)
 import LibPQ: LibPQ.execute, LibPQ.Connection
-import Missings: Missings, missing
+import LinearAlgebra: qr
+import Missings: Missings, missing, disallowmissing
 import PeriodicalDates: MonthlyDate
 import PanelShift: panellag!, tlag
 import ShiftedArrays: lag
@@ -28,6 +30,7 @@ import ZipFile: ZipFile.Reader
 # ------------------------------------------------------------------------------------------
 # Import functions
 include("Utilities.jl")
+include("betas.jl")
 include("ImportFamaFrench.jl")
 include("ImportYields.jl")
 include("ImportCRSP.jl")
@@ -58,6 +61,9 @@ export build_Funda!
 # -- Link
 export link_Funda
 export link_MSF
+
+# More practical functions
+export calculate_rolling_betas
 
 
 # ------------------------------------------------------------------------------------------

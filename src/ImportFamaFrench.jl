@@ -2,7 +2,7 @@
 
 # ImportFamaFrench.jl
 
-# Collection of functions that import 
+# Collection of functions that import
 #  financial data into julia
 # ------------------------------------------------------------------------------------------
 
@@ -11,7 +11,7 @@
 # ------------------------------------------------------------------------------------------
 # List of exported functions
 # export greet_FinanceRoutines  # for debugging
-# export import_FF3             # read monthly FF3   
+# export import_FF3             # read monthly FF3
 # ------------------------------------------------------------------------------------------
 
 
@@ -35,9 +35,9 @@ function import_FF3()
     z = ZipFile.Reader(http_response) ;
     a_file_in_zip = filter(x -> match(r".*csv", lowercase(x.name)) != nothing, z.files)[1]
     df_FF3 = copy(
-        CSV.File(a_file_in_zip, 
-                 skipto=5, header=4, limit=row_lim, delim=",", 
-                 types=ff_col_classes) |> 
+        CSV.File(a_file_in_zip,
+                 skipto=5, header=4, limit=row_lim, delim=",", ntasks=1,
+                 types=ff_col_classes) |>
         DataFrame);
     close(z)
 
@@ -45,7 +45,7 @@ function import_FF3()
     @subset!(df_FF3, .!(ismissing.(:datem)));
     @subset!(df_FF3, .!(ismissing.(:mktrf)));
     @rtransform!(df_FF3, :datem = MonthlyDate(:datem, "yyyymm"))
-    @subset!(df_FF3, :datem .>= MonthlyDate("1900-01", "yyyy-mm") )    
+    @subset!(df_FF3, :datem .>= MonthlyDate("1900-01", "yyyy-mm") )
 
     return df_FF3
 end
@@ -55,10 +55,10 @@ end
 """
     import_FF3(frequency::Symbol)
 
-Download and import the Fama-French 3 Factors from Ken French website. 
+Download and import the Fama-French 3 Factors from Ken French website.
 
 If `frequency` is unspecified, import the monthly research returns.
-If `frequency` is :daily, import the daily research returns. 
+If `frequency` is :daily, import the daily research returns.
 
 """
 function import_FF3(frequency::Symbol)
@@ -68,7 +68,7 @@ function import_FF3(frequency::Symbol)
 
     elseif frequency==:daily
       url_FF = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_daily_CSV.zip"
-    
+
         http_response = Downloads.download(url_FF);
 
         z = ZipFile.Reader(http_response) ;
@@ -82,7 +82,7 @@ function import_FF3(frequency::Symbol)
         @rtransform!(df_FF3, :date = Date(string(:date), "yyyymmdd") )
 
         return df_FF3
-    
+
     else
         @warn "Frequency $frequency not known. Try :daily or leave blank for :monthly"
     end

@@ -1,7 +1,5 @@
 @testset "Importing Fama-French factors from Ken French library" begin
 
-    import DataFrames: DataFrame, nrow
-
     df_FF3 = FinanceRoutines.import_FF3();
 
     @test names(df_FF3) == ["datem", "mktrf", "smb", "hml",  "rf"];

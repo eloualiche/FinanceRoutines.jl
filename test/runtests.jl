@@ -2,8 +2,15 @@
 using FinanceRoutines
 using Test
 
+import DataFrames: DataFrame, allowmissing!, groupby, combine, select, transform!, leftjoin, 
+    nrow, names, rename!
+import DataFramesMeta: DataFramesMeta, @rselect, @rsubset, @rsubset!, @transform!, @rtransform!, @transform
+# --------------------------------------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------------------------------------
 const testsuite = [
-    "KenFrench", "WRDS", "Yields"
+    "KenFrench", "WRDS", "Yields", "betas"
 ]
 # --------------------------------------------------------------------------------------------------
 
@@ -47,7 +54,7 @@ end
     # Actual tests
     for test in testsuite
         println("\033[1m\033[32m  → RUNNING\033[0m: $(test)")
-        include("$(test).jl")
+        include("UnitTests/$(test).jl")
         println("\033[1m\033[32m  PASSED\033[0m")
     end
 

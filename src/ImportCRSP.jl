@@ -182,7 +182,7 @@ end
 # when there are no connections establisheds
 function import_MSF(;
     date_range::Tuple{Date, Date} = (Date("1900-01-01"), Date("2030-01-01")),
-    variables::AbstractString = "",
+    variables::Vector{String} = [""],
     user::AbstractString = "", password::AbstractString = "")
 
     if user == ""
@@ -190,8 +190,8 @@ function import_MSF(;
     else
         wrds_conn = open_wrds_pg(user, password)
     end
-
     import_MSF(wrds_conn, date_range=date_range, variables=variables)
+
 end
 # ------------------------------------------------------------------------------------------
 
@@ -308,7 +308,7 @@ function build_MSF(;
     clean_cols::Bool=false
     )
 
-    df = import_MSF(;date_range);
+    df = import_MSF(; date_range = date_range);
     build_MSF!(df, save = save, trim_cols = trim_cols, clean_cols = clean_cols)
 
     return df

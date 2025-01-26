@@ -1,7 +1,6 @@
 @testset "Treasury Yields (GSW)" begin
 
     import Dates: Date
-    import DataFrames: DataFrame, names, select, combine, groupby, transform!
     import Statistics: mean, std
 
     df_GSW = import_GSW(date_range = (Date("1970-01-01"), Date("1989-12-31")) )
