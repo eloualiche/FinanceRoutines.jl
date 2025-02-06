@@ -84,15 +84,15 @@ The package exports the function `calculate_rolling_betas`.
 The package the closest to this one is
 
 - [WrdsMerger.jl](https://github.com/junder873/WRDSMerger.jl); WrdsMerger is probably in a more stable state than this package.
-
+- [WRDS.jl](https://github.com/elenev/WRDS.jl); WRDS specific wrappers to interact with the Postgres database.
 
 Other packages or sources of code I have used to process the WRDS data
 
-- [WRDS demo on momentum (python)](https://wrds-www.wharton.upenn.edu/documents/1442/wrds_momentum_demo.html)
-- Tidy Finance (R) [Book](https://www.tidy-finance.org) and [repo](https://github.com/tidy-finance/website)
-- French data [R package](https://nareal.github.io/frenchdata/articles/basic_usage.html)
-- Ian Gow [Quarto Book (R)](https://iangow.github.io/far_book/ident.html)
-- Replication [Open Source AP (stata)](https://github.com/OpenSourceAP/CrossSection/tree/master)
+- [WRDS demo on momentum](https://wrds-www.wharton.upenn.edu/documents/1442/wrds_momentum_demo.html) (python)
+- Tidy Finance [Book](https://www.tidy-finance.org) and [repo](https://github.com/tidy-finance/website) (R)
+- French data [package](https://nareal.github.io/frenchdata/articles/basic_usage.html) (R)
+- Ian Gow's Empirical Research in Accounting [Book](https://iangow.github.io/far_book/) (R)
+- Replication [Open Source AP](https://github.com/OpenSourceAP/CrossSection/tree/master) (stata)
 
 
 
