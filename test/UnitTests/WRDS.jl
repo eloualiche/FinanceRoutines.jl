@@ -9,6 +9,8 @@
     wrds_conn = FinanceRoutines.open_wrds_pg(WRDS_USERNAME, WRDS_PWD)
     @test typeof(wrds_conn) == Connection
 
+
+    # ----------------------------------------------------------------------------------------- #
     @testset "CRSP MSF" begin
         println("\033[1m\033[32m    → running\033[0m: CRSP MSF")
         df_msf = import_MSF(wrds_conn; date_range = (Date("2000-01-01"), Date("2002-01-01")));
@@ -19,6 +21,28 @@
         @test nrow(df_msf) > 100_000
     end
 
+
+    # ----------------------------------------------------------------------------------------- #
+    @testset "CRSP MSF V2" begin
+        # I have not developped against the new version of crsp
+        # this will need to happen as this is the only version that will get released going forward
+        # https://wrds-www.wharton.upenn.edu/pages/support/manuals-and-overviews/crsp/stocks-and-indices/crsp-stock-and-indexes-version-2/crsp-ciz-faq/
+
+        postgre_query_msf = """
+        SELECT *
+            FROM crsp.msf_v2
+            WHERE mthcaldt >= '$(string(date_range[1]))' AND mthcaldt <= '$(string(date_range[2]))'
+        """
+        res_q_msf = execute(wrds_conn, postgre_query_msf)
+        df_msf = DataFrame(columntable(res_q_msf))
+        # probably stale prices since we do not abs(prc) != prc
+        @test subset(df_msf, [:mthcaldt, :mthprcdt] => (x,y) -> isequal.(x, y) ) |> nrow > 0
+        @test subset(df_msf, :mthprc => ByRow(x -> !isequal(x, abs(x))) ) |> nrow == 0
+
+    end 
+
+
+    # ----------------------------------------------------------------------------------------- #
     @testset "CRSP DSF" begin
         println("\033[1m\033[32m    → running\033[0m: CRSP DSF")
         df_dsf = import_DSF(wrds_conn; date_range = (Date("2002-02-01"), Date("2002-02-05")) )
@@ -30,6 +54,7 @@
     end
 
 
+    # ----------------------------------------------------------------------------------------- #
     @testset "Compustat FUNDA" begin
         println("\033[1m\033[32m    → running\033[0m: Compustat FUNDA")
         df_funda = import_Funda(wrds_conn;
@@ -48,3 +73,5 @@
     end
 
 end
+
+
