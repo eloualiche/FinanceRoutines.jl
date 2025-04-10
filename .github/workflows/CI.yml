@@ -3,8 +3,11 @@ on:
   push:
     branches:
       - main
+      - feature/crsp-stock-v2-ciz
     tags: ["*"]
   pull_request:
+    branches:
+      - main
 concurrency:
   # Skip intermediate builds: always.
   # Cancel intermediate builds: only if it is a pull request build.
