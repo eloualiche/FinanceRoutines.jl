@@ -1,7 +1,9 @@
 @testset verbose=true "WRDS tests ... downloads and build" begin
 
     import Dates: Date, year, day
-    import LibPQ: Connection
+    import LibPQ: Connection, LibPQ.execute
+    import Tables: columntable
+
 
     WRDS_USERNAME = get(ENV, "WRDS_USERNAME", "");
     WRDS_PWD = get(ENV, "WRDS_PWD", "");
@@ -33,7 +35,7 @@
             FROM crsp.msf_v2
             WHERE mthcaldt >= '2000-01-01' AND mthcaldt <= '2002-01-01'
         """
-        res_q_msf = execute(wrds_conn, postgre_query_msf)
+        res_q_msf = LibPQ.execute(wrds_conn, postgre_query_msf)
         df_msf = DataFrame(columntable(res_q_msf))
         # probably stale prices since we do not abs(prc) != prc
         @test subset(df_msf, [:mthcaldt, :mthprcdt] => (x,y) -> isequal.(x, y) ) |> nrow > 0

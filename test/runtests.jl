@@ -3,7 +3,7 @@ using FinanceRoutines
 using Test
 
 import DataFrames: DataFrame, allowmissing!, groupby, combine, select, transform!, leftjoin, 
-    nrow, names, rename!
+    nrow, names, rename!, subset 
 import DataFramesMeta: DataFramesMeta, @rselect, @rsubset, @rsubset!, @transform!, @rtransform!, @transform
 # --------------------------------------------------------------------------------------------------
 
