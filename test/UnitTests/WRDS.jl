@@ -31,7 +31,7 @@
         postgre_query_msf = """
         SELECT *
             FROM crsp.msf_v2
-            WHERE mthcaldt >= '$(string(date_range[1]))' AND mthcaldt <= '$(string(date_range[2]))'
+            WHERE mthcaldt >= '2000-01-01' AND mthcaldt <= '2002-01-01'
         """
         res_q_msf = execute(wrds_conn, postgre_query_msf)
         df_msf = DataFrame(columntable(res_q_msf))
