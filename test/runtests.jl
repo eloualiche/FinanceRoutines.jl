@@ -2,8 +2,8 @@
 using FinanceRoutines
 using Test
 
-import DataFrames: DataFrame, allowmissing!, groupby, combine, select, transform!, leftjoin, 
-    nrow, names, rename!, subset 
+import DataFrames: DataFrame, allowmissing!, ByRow, combine, groupby, leftjoin, nrow, names, 
+    rename!, select, subset, transform!
 import DataFramesMeta: DataFramesMeta, @rselect, @rsubset, @rsubset!, @transform!, @rtransform!, @transform
 # --------------------------------------------------------------------------------------------------
 

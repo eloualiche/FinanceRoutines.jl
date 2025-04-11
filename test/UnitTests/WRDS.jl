@@ -1,7 +1,7 @@
 @testset verbose=true "WRDS tests ... downloads and build" begin
 
     import Dates: Date, year, day
-    import LibPQ: Connection, LibPQ.execute
+    import LibPQ: Connection, execute
     import Tables: columntable
 
 
@@ -26,6 +26,8 @@
 
     # ----------------------------------------------------------------------------------------- #
     @testset "CRSP MSF V2" begin
+        println("\033[1m\033[32m    → running\033[0m: CRSP MSF V2")
+
         # I have not developped against the new version of crsp
         # this will need to happen as this is the only version that will get released going forward
         # https://wrds-www.wharton.upenn.edu/pages/support/manuals-and-overviews/crsp/stocks-and-indices/crsp-stock-and-indexes-version-2/crsp-ciz-faq/
@@ -35,7 +37,7 @@
             FROM crsp.msf_v2
             WHERE mthcaldt >= '2000-01-01' AND mthcaldt <= '2002-01-01'
         """
-        res_q_msf = LibPQ.execute(wrds_conn, postgre_query_msf)
+        res_q_msf = execute(wrds_conn, postgre_query_msf)
         df_msf = DataFrame(columntable(res_q_msf))
         # probably stale prices since we do not abs(prc) != prc
         @test subset(df_msf, [:mthcaldt, :mthprcdt] => (x,y) -> isequal.(x, y) ) |> nrow > 0
