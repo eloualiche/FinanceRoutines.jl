@@ -1,5 +1,5 @@
 
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 function check_integer(x::AbstractVector)
     for i in x
         !(typeof(i) <: Union{Missing, Number}) && return false
@@ -9,10 +9,10 @@ function check_integer(x::AbstractVector)
     end
     return true
 end
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 
 
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 """
     Open a Postgres connection on WRDS server
 """
@@ -39,4 +39,40 @@ function open_wrds_pg()
     Base.shred!(password_buffer)
     return con
 end
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------------------------------------
+function log_with_level(message::String, level::Symbol=:debug; 
+                        _module=@__MODULE__, _file=@__FILE__, _line=@__LINE__)
+    # Convert symbol level to proper logging level
+    log_level = if level == :debug
+        Logging.Debug
+    elseif level == :info
+        Logging.Info
+    elseif level == :warn
+        Logging.Warn
+    elseif level == :error
+        Logging.Error
+    else
+        @warn "logging level not recognized ($level); default to debug"
+        # Default to Debug if unknown level is provided
+        Logging.Debug
+    end
+    
+    # Log the message at the specified level, preserving caller information
+    with_logger(ConsoleLogger(stderr, log_level)) do
+        @logmsg log_level message _module=_module _file=_file _line=_line
+    end
+end
+
+# I am not sure this is working!
+macro log_msg(message)
+    quote
+        # Use the logging_level variable from the current scope
+        if @isdefined(logging_level) && logging_level ∈ [:debug, :info, :warn, :error]
+            log_with_level($(esc(message)), logging_level; 
+                          _module=@__MODULE__, _file=@__FILE__, _line=@__LINE__)
+        end
+    end
+end# --------------------------------------------------------------------------------------------------

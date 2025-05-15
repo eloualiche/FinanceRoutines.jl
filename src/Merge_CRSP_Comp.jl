@@ -31,13 +31,11 @@ function import_ccm_link(wrds_conn::Connection)
     transform!(df_linktable, names(df_linktable, check_integer.(eachcol(df_linktable))) .=>
         (x->convert.(Union{Missing, Int}, x));
         renamecols = false);
-    @rtransform!(df_linktable, :gvkey = parse(Int, :gvkey) );
-    @rtransform!(df_linktable, :linkprim = String3(:linkprim),
-        :liid = String3(:liid), :linktype = String3(:linktype));
+    transform!(df_linktable, :gvkey => ByRow(x->parse(Int, x)) => :gvkey);
+    transform!(df_linktable, [:linkprim, :liid, :linktype] .=> ByRow(String3), renamecols=false)
 
 # Prepare the table
-    @rsubset!(df_linktable,
-        :linktype ∈ ("LU", "LC", "LS"), :linkprim ∈ ("P", "C") )
+    @p df_linktable |> filter!(_.linktype ∈ ("LU", "LC", "LS") && _.linkprim ∈ ("P", "C") )
     # @rsubset(df_linktable, !ismissing(:lpermno))
     df_linktable[ ismissing.(df_linktable.linkenddt), :linkenddt ] .= Dates.today();
     disallowmissing!(df_linktable, [:linkdt, :linkenddt, :lpermno]);
@@ -83,11 +81,11 @@ function link_MSF(df_linktable::DataFrame, df_msf::DataFrame)
         (df_msf, df_linktable),
         by_key(:permno) & by_pred(:date, ∈, x->x.linkdt..x.linkenddt)
     )
-    @rsubset!(df_msf_linked, !ismissing(:gvkey))
+    @p df_msf_linked |> filter!(.!ismissing.(_.gvkey))
     select!(df_msf_linked, :date, :permno, :gvkey)
 # merge this back
     df_msf_merged = leftjoin(df_msf, df_msf_linked, on = [:date, :permno], source="_merge")
-    @rtransform!(df_msf_merged, :datey = year(:date));
+    transform!(df_msf_merged, :date => ByRow(year) => :datey)
     select!(df_msf_merged, Not(:_merge))
 
     return df_msf_merged

@@ -119,7 +119,6 @@ Clean up the compustat funda file download from crsp (see `import_Funda`)
 - `df_funda::DataFrame`: DataFrame with compustat funda file "cleaned"
 """
 function build_Funda!(df::DataFrame;
-    save::String="",
     clean_cols::Bool=false,
     verbose::Bool=false
 )
@@ -128,11 +127,15 @@ function build_Funda!(df::DataFrame;
 
     # define book equity value
     verbose && (@info ". Creating book equity")
-    @transform!(df, :be =
-        coalesce(:seq, :ceq + :pstk, :at - :lt) + coalesce(:txditc, :txdb + :itcb, 0) -
-        coalesce(:pstkrv, :pstkl, :pstk, 0))
+    transform!(df, 
+        AsTable([:seq, :ceq, :pstk, :at, :lt, :txditc, :txdb, :itcb, :pstkrv, :pstkl]) =>
+        ByRow(r -> coalesce(r.seq, r.ceq + r.pstk, r.at - r.lt) +
+                   coalesce(r.txditc, r.txdb + r.itcb, 0) -
+                   coalesce(r.pstkrv, r.pstkl, r.pstk, 0)) => 
+        :be)
+
     df[isless.(df.be, 0), :be] .= missing
-    @rtransform!(df, :datey = year(:datadate))
+    transform!(df, :datadate => ByRow(year) => :datey)
     sort!(df, [:gvkey, :datey, :datadate])
     unique!(df, [:gvkey, :datey], keep=:last) # last obs
 
@@ -146,11 +149,6 @@ function build_Funda!(df::DataFrame;
                 df[!, col] = convert.(Union{Missing,Float64}, df[!, col])
             end
         end
-    end
-
-    if !(save == "")
-        verbose && (@info ". Saving to $save/funda.csv.gz")
-        CSV.write(save * "/funda.csv.gz", df, compress=true)
     end
 
     return df

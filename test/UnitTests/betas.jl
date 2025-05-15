@@ -39,8 +39,12 @@
         df_firms = reduce(vcat, df_firms)
         
         # -- estimate the return with some noise
-        @transform!(df_firms, 
-            :ret = :α + :βmkt .* :mkt + :βF1 .* :F1 + :βF2 .* :F2 + 0.0.*randn(nrow(df_firms)) )
+        # @transform!(df_firms, 
+        #     :ret = :α + :βmkt .* :mkt + :βF1 .* :F1 + :βF2 .* :F2 + 0.0.*randn(nrow(df_firms)) )
+        transform!(df_firms,
+            AsTable([:α, :βmkt, :mkt, :βF1, :F1, :βF2, :F2]) => 
+            (n -> n.α + n.βmkt .* n.mkt + n.βF1 .* n.F1 + n.βF2 .* n.F2 + 0.0.*randn(nrow(df_firms))) => 
+            :ret)
         allowmissing!(df_firms, :ret)
 
         # put some random missing ...     
@@ -53,7 +57,8 @@
 
 # -- test the function when we have fixed betas ... but we are running rolling regressions
     df_firms = gen_dataset()
-    @rtransform!(df_firms, :a=missing, :bmkt=missing, :bF1=missing, :bF2=missing)
+    insertcols!(df_firms, :a => missing, :bmkt => missing, :bF1 => missing, :bF2 => missing)
+
     for subdf in groupby(df_firms, :firm_id)
         β = calculate_rolling_betas(
             [ones(nrow(subdf)) subdf.mkt subdf.F1 subdf.F2],
@@ -64,12 +69,15 @@
         subdf[!, [:a, :bmkt, :bF1, :bF2]] = β
     end
     
-    df_test1 = combine(groupby(
-        @rselect(
-            @rsubset(df_firms, !ismissing(:a)), 
-            :datem, :firm_id, :a, :α, 
-            :Δ_a = :a - :α, :Δ_bmkt = :bmkt - :βmkt, :Δ_bF1 = :bF1 - :βF1, :Δ_bF2 = :bF2 - :βF2),
-        :firm_id), [:Δ_a, :Δ_bmkt, :Δ_bF1, :Δ_bF2] .=> mean, renamecols=false)
+    df_test1 = @p df_firms |>
+        subset(__, :a => ByRow(x -> !ismissing(x))) |>
+        select(__, :datem, :firm_id, 
+            [:a, :α]       => ByRow((x,y) -> x - y) => :Δ_a, 
+            [:bmkt, :βmkt] => ByRow((x,y) -> x - y) => :Δ_bmkt, 
+            [:bF1, :βF1]   => ByRow((x,y) -> x - y) => :Δ_bF1, 
+            [:bF2, :βF2]   => ByRow((x,y) -> x - y) => :Δ_bF2) |> 
+        groupby(__, :firm_id) |>
+        combine(__, [:Δ_a, :Δ_bmkt, :Δ_bF1, :Δ_bF2] .=> mean, renamecols=false)
     
     @test isapprox.(0.0,
         maximum(abs.(Array(combine(df_test1, [:Δ_a, :Δ_bmkt, :Δ_bF1, :Δ_bF2] .=> mean)[1, :]))),
