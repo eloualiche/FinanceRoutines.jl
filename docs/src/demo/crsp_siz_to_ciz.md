@@ -40,17 +40,17 @@ I do not fully understand the difference between `stkmthsecuritydata` and `msf_v
 
 In one of the transition slides, there is a dataset mapping from `SIZ` to `CIZ` and the final datasets `DSF_V2` and `MSF_V2`. 
 
-| SIZ                         | CIZ                                | WRDS              |
-|-----------------------------|------------------------------------|-------------------|
-| **DSF**                     | **stkDlySecurityData**             | **DSF_V2**        |
-| **MSF**                     | **stkMthSecurityData**             | **MSF_V2**        |
-|                             |                                    |                   |
-| **StockNames**              | **stkSecurityInfoHist**            | **StockNames_V2** |
-| **DSE\***                   | **stkDelists**                     |                   |
-| **MSE\***                   | **stkDistributions**               |                   |
-|                             |                                    |                   |
-| **DSI**                     | **indDlySeriesData(_ind)**         |                   |
-| **MSI**                     | **indMthSeriesData(_ind)**         |                   |
+| **SIZ**         | **CIZ**                         | **WRDS**         |
+|----------------|----------------------------------|------------------|
+| DSF            | stkDlySecurityData               | DSF_V2           |
+| MSF            | stkMthSecurityData               | MSF_V2           |
+|                |                                  |                  |
+| StockNames     | stkSecurityInfoHist              | StockNames_V2    |
+| DSE*           | stkDelists                       |                  |
+| MSE*           | stkDistributions                 |                  |
+|                |                                  |                  |
+| DSI            | indDlySeriesData(_ind)           |                  |
+| MSI            | indMthSeriesData(_ind)           |                  |
 
 
 We are going to use the postgres server directly so we load the relevant packages here
