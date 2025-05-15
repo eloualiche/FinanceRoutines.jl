@@ -5,18 +5,19 @@ module FinanceRoutines
 import Downloads
 import ZipFile
 import CSV
-import DataFrames: AbstractDataFrame, DataFrame, ByRow, groupby, nrow, passmissing, Not,
-  rename!, select, select!, groupby, transform!, leftjoin, disallowmissing!
-import DataFramesMeta: DataFramesMeta,
-  @passmissing, @subset!, @rsubset!, @transform!, @rtransform!
+import DataFrames: AbstractDataFrame, AsTable, DataFrame, ByRow, groupby, nrow, passmissing, Not,
+  rename!, select, select!, subset!, transform!, leftjoin, disallowmissing!
+import DataPipes: @p
 import Dates: Dates, Date, Day, Month, year
 import Decimals: Decimal
 import Downloads: Downloads.download
-import FlexiJoins: innerjoin, by_key, by_pred
+import FlexiJoins
+using FlexiJoins: by_key, by_pred
 import GLM: coef, lm
 import IntervalSets:(..)
 import LibPQ: LibPQ.execute, LibPQ.Connection
 import LinearAlgebra: qr
+import Logging: Logging, with_logger, ConsoleLogger, @logmsg, Logging.Debug, Logging.Info, Logging.Warn, Logging.Error
 import Missings: Missings, missing, disallowmissing
 import PeriodicalDates: MonthlyDate
 import PanelShift: panellag!, tlag
@@ -52,9 +53,9 @@ export import_FF3
 
 # WRDS
 # -- CRSP
-export import_MSF             # import Monthly Stock File
-export import_DSF             # import Daily Stock File
-export build_MSF, build_MSF!              # clean Monthly Stock File
+export import_MSF, import_MSF_v2    # import Monthly Stock File
+export import_DSF, import_DSF_v2    # import Daily Stock File
+export build_MSF, build_MSF!        # clean Monthly Stock File
 # -- Funda
 export import_Funda
 export build_Funda!

@@ -1,5 +1,6 @@
 # Advanced WRDS
 
+
 The package provides ready-built query to the postgres WRDS database. 
 The queries are the most common and used ones and allow to get a crsp/compustat dataset fairly quickly.
 
@@ -29,6 +30,8 @@ postgre_query_msenames_columns= """
 res_q = execute(wrds_conn, postgre_query_msenames_columns)
 msenames_columns = DataFrame(columntable(res_q)).column_name |> sort
 ```
+
+
 
 Now imagine that we want to pull columns from the monthly stock file with the following conditions: a given time frame (e.g. the 2000s) and company names that contain "AP".
 We would get the `permno` that match from `msenames` and match it on the fly to `msf`

@@ -2,9 +2,9 @@
 using FinanceRoutines
 using Test
 
-import DataFrames: DataFrame, allowmissing!, ByRow, combine, groupby, leftjoin, nrow, names, 
-    rename!, select, subset, transform!
-import DataFramesMeta: DataFramesMeta, @rselect, @rsubset, @rsubset!, @transform!, @rtransform!, @transform
+import DataFrames: DataFrame, allowmissing!, AsTable,  ByRow, combine, groupby, insertcols!,
+    leftjoin, nrow, names, rename!, select, subset, transform!
+import DataPipes: @p
 # --------------------------------------------------------------------------------------------------
 
 

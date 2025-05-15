@@ -26,7 +26,7 @@ function import_GSW(;
 
   # clean up the table
     rename!(df_gsw, "Date" => "date");
-    @rsubset!(df_gsw, :date >= date_range[1], :date <= date_range[2]);
+    @p df_gsw |> filter!( (_.date >= date_range[1]) &&  (_.date <= date_range[2]) )
     select!(df_gsw, :date, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2);
     transform!(df_gsw, [:BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2] .=>
         ByRow(c -> tryparse(Float64, c) |> (x-> isnothing(x) ? missing : x) ), renamecols=false)
@@ -46,8 +46,12 @@ end
 function estimate_yield_GSW!(df::DataFrame;
     maturity::Real=1)
 
-    @rtransform!(df,
-        :y=NSSparamtoYield(maturity, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2) )
+    # @rtransform!(df,
+    #     :y=NSSparamtoYield(maturity, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2) )
+    transform!(df, 
+        AsTable([:BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2]) => 
+        ByRow(n -> NSSparamtoYield(maturity, n.BETA0, n.BETA1, n.BETA2, n.BETA3, n.TAU1, n.TAU2) ) =>
+        :y)
 
     rename!(df, "y" => "yield_$(maturity)y")
 
@@ -64,8 +68,11 @@ end
 function estimate_price_GSW!(df::DataFrame;
     maturity::Real=1)
 
-    @rtransform!(df,
-        :y=NSSparamtoPrice(maturity, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2) )
+    transform!(df, 
+        AsTable([:BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2]) => 
+        ByRow(n -> NSSparamtoPrice(maturity, n.BETA0, n.BETA1, n.BETA2, n.BETA3, n.TAU1, n.TAU2) ) =>
+        :y)
+
 
     rename!(df, "y" => "price_$(maturity)y")
 
@@ -93,14 +100,23 @@ function estimate_return_GSW!(df::DataFrame;
     end
 
     sort!(df, :date)
-    @rtransform!(df,
-        :p2=NSSparamtoPrice(maturity, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2),
-        :p1=NSSparamtoPrice(maturity+Δmaturity, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2) );
-    @transform!(df, :lag_p1 = tlag(:date, :p1, Day(Δdays)));
+    # @rtransform!(df,
+    #     :p2=NSSparamtoPrice(maturity, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2),
+    #     :p1=NSSparamtoPrice(maturity+Δmaturity, :BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2) );
+    transform!(df, 
+        AsTable([:BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2]) => 
+        ByRow(n -> NSSparamtoPrice(maturity, 
+                                   n.BETA0, n.BETA1, n.BETA2, n.BETA3, n.TAU1, n.TAU2) ) => :p2,
+        AsTable([:BETA0, :BETA1, :BETA2, :BETA3, :TAU1, :TAU2]) => 
+        ByRow(n -> NSSparamtoPrice(maturity + Δmaturity, 
+                                   n.BETA0, n.BETA1, n.BETA2, n.BETA3, n.TAU1, n.TAU2) ) => :p1
+        )
+
+    transform!(df, [:date, :p1] => ((d,p) -> tlag(d, p, Day(Δdays))) => :lag_p1)
     if type==:log
-        @rtransform!(df, $("ret_$(maturity)y_$(frequency)") = log(:p2 / :lag_p1) );
+        transform!(df, [:p2, :lag_p1] => ByRow( (p,lp) -> log(p/lp) ) => "ret_$(maturity)y_$(frequency)" );
     else
-        @rtransform!(df, $("ret_$(maturity)y_$(frequency)") = (:p2 - :lag_p1) / :lag_p1)
+        transform!(df, [:p2, :lag_p1] => ByRow( (p,lp) -> (p-lp) / lp ) => "ret_$(maturity)y_$(frequency)" );
     end
     select!(df, Not([:lag_p1, :p1, :p2]) )
     select!(df, [:date, Symbol("ret_$(maturity)y_$(frequency)")],

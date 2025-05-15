@@ -29,7 +29,7 @@ function import_FF3()
 
     url_FF = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip"
     ff_col_classes = [String7, Float64, Float64, Float64, Float64];
-    row_lim = div(MonthlyDate(Dates.today()) - MonthlyDate(1926, 7), Dates.Month(1)) - 1
+    row_lim = div(MonthlyDate(Dates.today()) - MonthlyDate(1926, 7), Dates.Month(1)) 
 
     http_response = Downloads.download(url_FF);
     z = ZipFile.Reader(http_response) ;
@@ -41,11 +41,12 @@ function import_FF3()
         DataFrame);
     close(z)
 
-    rename!(df_FF3, [:datem, :mktrf, :smb, :hml, :rf]);
-    @subset!(df_FF3, .!(ismissing.(:datem)));
-    @subset!(df_FF3, .!(ismissing.(:mktrf)));
-    @rtransform!(df_FF3, :datem = MonthlyDate(:datem, "yyyymm"))
-    @subset!(df_FF3, :datem .>= MonthlyDate("1900-01", "yyyy-mm") )
+    rename!(df_FF3, [:datem, :mktrf, :smb, :hml, :rf])
+    df_FF3 = @p df_FF3 |> filter(.!ismissing.(_.datem) && isequal.( length.(strip(_.datem)), 6 ) )
+    df_FF3 = @p df_FF3 |> filter(.!ismissing.(_.mktrf))
+
+    transform!(df_FF3, :datem => ByRow(x -> MonthlyDate(x, "yyyymm")) => :datem)
+    df_FF3 = @p df_FF3 |> filter(_.datem .>= MonthlyDate("1900-01", "yyyy-mm"))
 
     return df_FF3
 end
@@ -77,9 +78,9 @@ function import_FF3(frequency::Symbol)
         close(z)
 
         rename!(df_FF3, [:date, :mktrf, :smb, :hml, :rf]);
-        @subset!(df_FF3, .!(ismissing.(:date)));
-        @subset!(df_FF3, .!(ismissing.(:mktrf)));
-        @rtransform!(df_FF3, :date = Date(string(:date), "yyyymmdd") )
+        df_FF3 = @p df_FF3 |> filter(.!ismissing.(_.date) && .!ismissing.(_.mktrf))
+
+        transform!(df_FF3, :date => ByRow(x -> Date(string(x), "yyyymmdd") ) => :date)
 
         return df_FF3
 

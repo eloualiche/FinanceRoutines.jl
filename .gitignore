@@ -7,6 +7,7 @@ docs/build/
 docs/.DS_Store
 .env
 .env.gpg
+documentation
 # ---------------------------------------------------------
 
 
@@ -15,5 +16,6 @@ docs/.DS_Store
 sandbox.jl
 sandbox_test.jl
 sandbox.R
+src/towards_ciz_v2.jl
 tmp
 # ---------------------------------------------------------
