@@ -2,8 +2,8 @@
 using FinanceRoutines
 using Test
 
-import DataFrames: DataFrame, allowmissing!, AsTable,  ByRow, combine, groupby, insertcols!,
-    leftjoin, nrow, names, rename!, select, subset, transform!
+import DataFrames: DataFrame, allowmissing!, AsTable,  ByRow, combine, groupby, innerjoin,
+    insertcols!, leftjoin, nrow, names, rename!, select, subset, transform!
 import DataPipes: @p
 # --------------------------------------------------------------------------------------------------
 

@@ -58,7 +58,7 @@ export import_DSF, import_DSF_v2    # import Daily Stock File
 export build_MSF, build_MSF!        # clean Monthly Stock File
 # -- Funda
 export import_Funda
-export build_Funda!
+export build_Funda!, build_Funda
 # -- Link
 export link_Funda
 export link_MSF

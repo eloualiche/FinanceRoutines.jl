@@ -153,14 +153,29 @@ function build_Funda!(df::DataFrame;
 
     return df
 end
+
+function build_Funda(df::DataFrame;
+    clean_cols::Bool=false,
+    verbose::Bool=false
+)
+
+    df_ret = copy(df)
+    build_Funda!(df_ret, clean_cols=clean_cols, verbose=verbose)
+
+    return df_ret
+    
+end
+
 # ------------------------------------------------------------------------------------------
 
 
 # ------------------------------------------------------------------------------------------
 const compd_funda = [
-    "GVKEY", "DATADATE", "FYEAR", "INDFMT", "CONSOL", "POPSRC", "DATAFMT", "TIC", "CUSIP", "CONM", "ACCTCHG", "ACCTSTD", "ACQMETH", "ADRR", "AJEX",
-    "AJP", "BSPR", "COMPST", "CURCD", "CURNCD", "CURRTR", "CURUSCN", "FINAL", "FYR", "ISMOD", "LTCM", "OGM", "PDDUR", "SCF", "SRC", "STALT", "UDPL", "UPD",
-    "APDEDATE", "FDATE", "PDATE", "ACCHG", "ACCO", "ACCRT", "ACDO", "ACO", "ACODO", "ACOMINC", "ACOX", "ACOXAR", "ACQAO", "ACQCSHI", "ACQGDWL", "ACQIC",
+    "GVKEY", "DATADATE", "FYEAR", "INDFMT", "CONSOL", "POPSRC", "DATAFMT", "TIC", "CUSIP", "CONM", 
+    "ACCTCHG", "ACCTSTD", "ACQMETH", "ADRR", "AJEX", "AJP", "BSPR", "COMPST", "CURCD", "CURNCD", 
+    "CURRTR", "CURUSCN", "FINAL", "FYR", "ISMOD", "LTCM", "OGM", "PDDUR", "SCF", "SRC", "STALT", 
+    "UDPL", "UPD", "APDEDATE", "FDATE", "PDATE", "ACCHG", "ACCO", "ACCRT", "ACDO", "ACO", "ACODO", 
+    "ACOMINC", "ACOX", "ACOXAR", "ACQAO", "ACQCSHI", "ACQGDWL", "ACQIC",
     "ACQINTAN", "ACQINVT", "ACQLNTAL", "ACQNIINTC", "ACQPPE", "ACQSC", "ACT", "ADPAC", "AEDI", "AFUDCC", "AFUDCI", "ALDO", "AM", "AMC", "AMDC", "AMGW", "ANO",
     "AO", "AOCIDERGL", "AOCIOTHER", "AOCIPEN", "AOCISECGL", "AODO", "AOL2", "AOLOCH", "AOX", "AP", "APALCH", "APB", "APC", "APOFS", "AQA", "AQC", "AQD", "AQEPS",
     "AQI", "AQP", "AQPL1", "AQS", "ARB", "ARC", "ARCE", "ARCED", "ARCEEPS", "ARTFS", "AT", "AUL3", "AUTXR", "BALR", "BANLR", "BAST", "BASTR", "BATR", "BCEF", "BCLR",

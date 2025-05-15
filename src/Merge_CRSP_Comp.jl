@@ -64,7 +64,7 @@ end
 # ------------------------------------------------------------------------------------------
 function link_Funda(df_linktable::DataFrame, df_funda::DataFrame)
 
-    funda_link_permno = innerjoin(
+    funda_link_permno = FlexiJoins.innerjoin(
         (select(df_funda, :gvkey, :datadate), df_linktable),
         by_key(:gvkey) & by_pred(:datadate, ∈, x->x.linkdt..x.linkenddt) )
     select!(funda_link_permno,
@@ -77,12 +77,13 @@ end
 
 function link_MSF(df_linktable::DataFrame, df_msf::DataFrame)
 # Merge with CRSP
-    df_msf_linked = innerjoin(
+    df_msf_linked = FlexiJoins.innerjoin(
         (df_msf, df_linktable),
         by_key(:permno) & by_pred(:date, ∈, x->x.linkdt..x.linkenddt)
     )
     @p df_msf_linked |> filter!(.!ismissing.(_.gvkey))
     select!(df_msf_linked, :date, :permno, :gvkey)
+    
 # merge this back
     df_msf_merged = leftjoin(df_msf, df_msf_linked, on = [:date, :permno], source="_merge")
     transform!(df_msf_merged, :date => ByRow(year) => :datey)

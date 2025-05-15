@@ -1,41 +1,52 @@
-# Estimating Beta
+# Estimating Stock Betas
 
-## Download the monthly stock file from CRSP
+This describes the step by step procedure to estimate betas stock by stock first unconditionally and then using rolling windows.
+We first download the monthly stock file.
+
 
 Since we are about to download data from CRSP we set up a connection with our WRDS credentials
 ```julia
 using FinanceRoutines
-using DataFrames, DataFramesMeta, Dates
+using DataFrames, DataPipes, Dates
 using FixedEffectModels # for regressions
-wrds_conn = FinanceRoutines.open_wrds_pg()
+
+const wrds_conn = FinanceRoutines.open_wrds_pg()
+const date_init = Date("1990-01-01")
 ```
 
+We are ready to import the monthly stock file:
 ```julia
-# Import the monthly stock file
-df_msf = import_MSF(wrds_conn; date_range = (Date("1980-01-01"), Dates.today())); 
-df_msf = build_MSF!(df_msf);    # Run common processing
-# keep only what we need from the MSF
-select!(df_msf, :permno, :date, :datem, :ret, :mktcap)
+df_msf_raw = import_MSF_v2(wrds_conn; date_range = (date_init, Dates.today())); 
 ```
 
-## Download the Fama-French three pricing factors from Ken French's website
-
-
+And the Fama-French three pricing factors from Ken French's website.
 This downloads directly data from Ken French's website and formats the data
-
 ```julia
 df_FF3 = import_FF3()
 # make sure the returns are expressed in the same unit as in the MSF
 transform!(df_FF3, [:mktrf, :smb, :hml, :rf] .=> ByRow((x->x/100)), renamecols=false )
 ```
 
-## Merge the data and estimate beta
+
+## Unconditional Stock Betas
+
+
+### Format the monthly stock file from CRSP
+
+```julia
+# keep only what we need from the MSF
+df_msf = select(df_msf_raw, :permno, :mthcaldt => :date, :datem, 
+    [:mthret, :mthcap] .=> ByRow(passmissing(Float64)) .=> [:ret, :mthcap]) # convert from decimals
+```
+
+
+### Merge the data and estimate beta
 
 ```julia
 # Merge the data
 df_msf = leftjoin(df_msf, df_FF3, on = [:datem] )
 # Create excess return
-@rtransform!(df_msf, :ret_rf = :ret - :rf)
+transform!(df_msf, [:ret, :rf] => ( (r1, r0) -> r1 .- r0 ) => :ret_rf)
 
 # Estimate CAPM beta over the whole sample
 sort!(df_msf, [:permno, :date])
@@ -66,28 +77,26 @@ unique(df_msf, r"β")
 select(unique(df_msf, r"β"), :permno, :β_MKT, :β_SMB, :β_HML)
 ```
 
-## Rolling betas
+
+
+## Rolling Betas for Stocks
 
 I export a very simple function for rolling betas (see the test for examples). 
 
 First we prepare the basic dataset from the monthly stock file and the Fama-French risk factors for example
 ```julia
 # Get individual stock returns
-df_msf = build_MSF(date_range = (Date("1980-01-01"), Dates.today()), clean_cols=true); 
-select!(df_msf, :permno, :date, :datem, :ret, :mktcap)
-# Get the monthly factor returns
-df_FF3 = import_FF3()
-transform!(df_FF3, [:mktrf, :smb, :hml, :rf] .=> ByRow((x->x/100)), renamecols=false)
+df_msf = select(df_msf_raw, :permno, :mthcaldt => :date, :datem, 
+    [:mthret, :mthcap] .=> ByRow(passmissing(Float64)) .=> [:ret, :mthcap]) # convert from decimals
 # merge and create excess returns
 df_msf = leftjoin(df_msf, df_FF3, on = [:datem] )
-@rtransform!(df_msf, :ret_rf = :ret - :rf)
+transform!(df_msf, [:ret, :rf] => ( (r1, r0) -> r1 .- r0 ) => :ret_rf)
 sort!(df_msf, [:permno, :date])
 ```
 
 Now we are ready to run the regression using the function `calculate_rolling_betas` that the package exports
 ```julia
-@rtransform!(df_msf, :a=missing, :bMKT=missing, :bSMB=missing, :bHML=missing)
-
+insertcols!(df_msf, :a=>missing, :bMKT=>missing, :bSMB=>missing, :bHML=>missing)
 @time for subdf in groupby(df_msf, :permno)
     β = calculate_rolling_betas(
         [ones(nrow(subdf)) subdf.mktrf subdf.smb subdf.hml],
@@ -100,9 +109,10 @@ Now we are ready to run the regression using the function `calculate_rolling_bet
 end
 
 import Statistics: median, mean
-combine(groupby(df_msf, :datem), :bMKT .=> 
-    [(x-> emptymissing(mean)(skipmissing(x))) (x-> emptymissing(median)(skipmissing(x)))] .=>
-    [:bMKT_mean :bMKT_median])
+@p df_msf |> groupby(__, :datem) |> 
+    combine(__, :bMKT .=> 
+        [(x-> emptymissing(mean)(skipmissing(x))) (x-> emptymissing(median)(skipmissing(x)))] .=>
+        [:bMKT_mean :bMKT_median])
 ```
 Go make some coffee ... this takes a little while (~ 15mn on M2max macbook pro). 
 I don't think my method is super efficient 

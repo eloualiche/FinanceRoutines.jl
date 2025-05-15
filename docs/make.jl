@@ -17,7 +17,7 @@ makedocs(
         ],
         "Demos" => [
             "demo/beta.md",
-            "demo/wrds_advanced.md"
+            "demo/wrds_advanced.md",
             "demo/crsp_siz_to_ciz.md"
         ],
         "Library" => [
