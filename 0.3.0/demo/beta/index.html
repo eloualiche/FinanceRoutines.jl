@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Estimating Stock Betas · FinanceRoutines.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FinanceRoutines.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../man/wrds_guide/">WRDS User Guide</a></li></ul></li><li><span class="tocitem">Demos</span><ul><li class="is-active"><a class="tocitem" href>Estimating Stock Betas</a><ul class="internal"><li><a class="tocitem" href="#Unconditional-Stock-Betas"><span>Unconditional Stock Betas</span></a></li><li><a class="tocitem" href="#Rolling-Betas-for-Stocks"><span>Rolling Betas for Stocks</span></a></li></ul></li><li><a class="tocitem" href="../wrds_advanced/">Advanced WRDS</a></li><li><a class="tocitem" href="../crsp_siz_to_ciz/">Transitioning to the new CRSP file format</a></li></ul></li><li><span class="tocitem">Library</span><ul><li><a class="tocitem" href="../../lib/public/">Public Interface</a></li><li><a class="tocitem" href="../../lib/internals/">Package Internals</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demos</a></li><li class="is-active"><a href>Estimating Stock Betas</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Estimating Stock Betas</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/eloualiche/FinanceRoutines.jl/blob/main/docs/src/demo/beta.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Estimating-Stock-Betas"><a class="docs-heading-anchor" href="#Estimating-Stock-Betas">Estimating Stock Betas</a><a id="Estimating-Stock-Betas-1"></a><a class="docs-heading-anchor-permalink" href="#Estimating-Stock-Betas" title="Permalink"></a></h1><p>This describes the step by step procedure to estimate betas stock by stock first unconditionally and then using rolling windows. We first download the monthly stock file.</p><p>Since we are about to download data from CRSP we set up a connection with our WRDS credentials</p><pre><code class="language-julia hljs">using FinanceRoutines
+using DataFrames, DataPipes, Dates
+using FixedEffectModels # for regressions
+
+const wrds_conn = FinanceRoutines.open_wrds_pg()
+const date_init = Date(&quot;1990-01-01&quot;)</code></pre><p>We are ready to import the monthly stock file:</p><pre><code class="language-julia hljs">df_msf_raw = import_MSF_v2(wrds_conn; date_range = (date_init, Dates.today())); </code></pre><p>And the Fama-French three pricing factors from Ken French&#39;s website. This downloads directly data from Ken French&#39;s website and formats the data</p><pre><code class="language-julia hljs">df_FF3 = import_FF3()
+# make sure the returns are expressed in the same unit as in the MSF
+transform!(df_FF3, [:mktrf, :smb, :hml, :rf] .=&gt; ByRow((x-&gt;x/100)), renamecols=false )</code></pre><h2 id="Unconditional-Stock-Betas"><a class="docs-heading-anchor" href="#Unconditional-Stock-Betas">Unconditional Stock Betas</a><a id="Unconditional-Stock-Betas-1"></a><a class="docs-heading-anchor-permalink" href="#Unconditional-Stock-Betas" title="Permalink"></a></h2><h3 id="Format-the-monthly-stock-file-from-CRSP"><a class="docs-heading-anchor" href="#Format-the-monthly-stock-file-from-CRSP">Format the monthly stock file from CRSP</a><a id="Format-the-monthly-stock-file-from-CRSP-1"></a><a class="docs-heading-anchor-permalink" href="#Format-the-monthly-stock-file-from-CRSP" title="Permalink"></a></h3><pre><code class="language-julia hljs"># keep only what we need from the MSF
+df_msf = select(df_msf_raw, :permno, :mthcaldt =&gt; :date, :datem, 
+    [:mthret, :mthcap] .=&gt; ByRow(passmissing(Float64)) .=&gt; [:ret, :mthcap]) # convert from decimals</code></pre><h3 id="Merge-the-data-and-estimate-beta"><a class="docs-heading-anchor" href="#Merge-the-data-and-estimate-beta">Merge the data and estimate beta</a><a id="Merge-the-data-and-estimate-beta-1"></a><a class="docs-heading-anchor-permalink" href="#Merge-the-data-and-estimate-beta" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Merge the data
+df_msf = leftjoin(df_msf, df_FF3, on = [:datem] )
+# Create excess return
+transform!(df_msf, [:ret, :rf] =&gt; ( (r1, r0) -&gt; r1 .- r0 ) =&gt; :ret_rf)
+
+# Estimate CAPM beta over the whole sample
+sort!(df_msf, [:permno, :date])
+for subdf in groupby(df_msf, :permno)
+    if size(dropmissing(subdf, [:ret_rf, :mktrf]))[1] &gt; 2
+        β_CAPM = coef(reg(subdf, @formula(ret_rf ~ mktrf)))[2]
+        subdf[:, :β_CAPM ] .= β_CAPM
+    else
+        subdf[:, :β_CAPM ] .= missing
+    end
+end
+select(unique(df_msf, [:permno, :β_CAPM]), :permno, :β_CAPM)
+
+# Estimate 3 Factor betas
+for subdf in groupby(df_msf, :permno)
+    if size(dropmissing(subdf, [:ret_rf, :mktrf, :smb, :hml]))[1] &gt; 2
+        β_MKT, β_SMB, β_HML = coef(reg(subdf, @formula(ret_rf ~ mktrf + smb + hml)))[2:4]
+        subdf[:, :β_MKT ] .= β_MKT
+        subdf[:, :β_SMB ] .= β_SMB
+        subdf[:, :β_HML ] .= β_HML
+    else
+        subdf[:, :β_MKT ] .= missing; 
+        subdf[:, :β_SMB ] .= missing; 
+        subdf[:, :β_HML ] .= missing
+    end
+end
+unique(df_msf, r&quot;β&quot;)
+select(unique(df_msf, r&quot;β&quot;), :permno, :β_MKT, :β_SMB, :β_HML)</code></pre><h2 id="Rolling-Betas-for-Stocks"><a class="docs-heading-anchor" href="#Rolling-Betas-for-Stocks">Rolling Betas for Stocks</a><a id="Rolling-Betas-for-Stocks-1"></a><a class="docs-heading-anchor-permalink" href="#Rolling-Betas-for-Stocks" title="Permalink"></a></h2><p>I export a very simple function for rolling betas (see the test for examples). </p><p>First we prepare the basic dataset from the monthly stock file and the Fama-French risk factors for example</p><pre><code class="language-julia hljs"># Get individual stock returns
+df_msf = select(df_msf_raw, :permno, :mthcaldt =&gt; :date, :datem, 
+    [:mthret, :mthcap] .=&gt; ByRow(passmissing(Float64)) .=&gt; [:ret, :mthcap]) # convert from decimals
+# merge and create excess returns
+df_msf = leftjoin(df_msf, df_FF3, on = [:datem] )
+transform!(df_msf, [:ret, :rf] =&gt; ( (r1, r0) -&gt; r1 .- r0 ) =&gt; :ret_rf)
+sort!(df_msf, [:permno, :date])</code></pre><p>Now we are ready to run the regression using the function <code>calculate_rolling_betas</code> that the package exports</p><pre><code class="language-julia hljs">insertcols!(df_msf, :a=&gt;missing, :bMKT=&gt;missing, :bSMB=&gt;missing, :bHML=&gt;missing)
+@time for subdf in groupby(df_msf, :permno)
+    β = calculate_rolling_betas(
+        [ones(nrow(subdf)) subdf.mktrf subdf.smb subdf.hml],
+        subdf.ret_rf; 
+        window=60,         # 60 months
+        min_data=nothing,   # what is the minimum number of nonmissing data to return a proper number
+        method=:linalg
+    )
+    subdf[!, [:a, :bMKT, :bSMB, :bHML]] = β
+end
+
+import Statistics: median, mean
+@p df_msf |&gt; groupby(__, :datem) |&gt; 
+    combine(__, :bMKT .=&gt; 
+        [(x-&gt; emptymissing(mean)(skipmissing(x))) (x-&gt; emptymissing(median)(skipmissing(x)))] .=&gt;
+        [:bMKT_mean :bMKT_median])</code></pre><p>Go make some coffee ... this takes a little while (~ 15mn on M2max macbook pro).  I don&#39;t think my method is super efficient </p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../man/wrds_guide/">« WRDS User Guide</a><a class="docs-footer-nextpage" href="../wrds_advanced/">Advanced WRDS »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Thursday 15 May 2025 23:28">Thursday 15 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
