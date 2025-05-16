@@ -16,7 +16,7 @@ const date_init = Date("1990-01-01")
 
 We are ready to import the monthly stock file:
 ```julia
-df_msf_raw = import_MSF_v2(wrds_conn; date_range = (date_init, Dates.today())); 
+@time df_msf_raw = import_MSF_v2(wrds_conn; date_range = (date_init, Dates.today())); 
 ```
 
 And the Fama-French three pricing factors from Ken French's website.

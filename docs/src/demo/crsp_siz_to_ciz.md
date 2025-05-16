@@ -17,8 +17,11 @@ These tables are available from the WRDS postgres server
 ```julia
 using FinanceRoutines
 using DataPipes, DataFrames, DataFramesMeta, DataPipes
+import LibPQ: LibPQ.execute, LibPQ.Connection # to connect directly to the server
+import Tables: columntable
+
 wrds_conn = FinanceRoutines.open_wrds_pg(); # open a wrds connection with credentials
-see(df) = show(df, allcols=true, allrows=true, truncate=0)
+see(df) = show(df, allcols=true, allrows=true, truncate=0) # to view df without column truncation
 ```
 
 ```julia
@@ -40,24 +43,20 @@ I do not fully understand the difference between `stkmthsecuritydata` and `msf_v
 
 In one of the transition slides, there is a dataset mapping from `SIZ` to `CIZ` and the final datasets `DSF_V2` and `MSF_V2`. 
 
-| **SIZ**         | **CIZ**                         | **WRDS**         |
-|----------------|----------------------------------|------------------|
-| DSF            | stkDlySecurityData               | DSF_V2           |
-| MSF            | stkMthSecurityData               | MSF_V2           |
-|                |                                  |                  |
-| StockNames     | stkSecurityInfoHist              | StockNames_V2    |
-| DSE*           | stkDelists                       |                  |
-| MSE*           | stkDistributions                 |                  |
-|                |                                  |                  |
-| DSI            | indDlySeriesData(_ind)           |                  |
-| MSI            | indMthSeriesData(_ind)           |                  |
+| Old File Format: MSF 1.0 or **SIZ** | New File Format: MSF 2.0 **CIZ** | **WRDS**         |
+|-------------------------------------|----------------------------------|------------------|
+| `DSF`                               | `stkDlySecurityData`             | `DSF_V2`         |
+| `MSF`                               | `stkMthSecurityData`             | `MSF_V2`         |
+| ` `                                 |                                  |                  |
+| `StockNames`                        | `stkSecurityInfoHist`            | `StockNames_V2`  |
+| `DSE`                               | `stkDelists`                     |                  |
+| `MSE`                               | `stkDistributions`               |                  |
+| ` `                                 |                                  |                  |
+| `DSI`                               | `indDlySeriesData`(`_ind`)       |                  |
+| `MSI`                               | `indMthSeriesData`(`_ind`)       |                  |
+|-------------------------------------|----------------------------------|------------------|
 
 
-We are going to use the postgres server directly so we load the relevant packages here
-```julia
-import LibPQ: LibPQ.execute, LibPQ.Connection
-import Tables: columntable
-```
 
 
 ### Main Stock Files
